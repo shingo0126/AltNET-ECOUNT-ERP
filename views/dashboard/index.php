@@ -1,8 +1,13 @@
-<!-- Filter Bar -->
+<!-- Filter Bar (상단 요약 통계용) -->
 <div class="card">
     <div class="card-body" style="padding:12px 20px;">
         <form method="GET" class="d-flex gap-2 flex-wrap align-center">
             <input type="hidden" name="page" value="dashboard">
+            <!-- TOP20 필터 상태 유지 -->
+            <input type="hidden" name="top_year" value="<?= e($topYear) ?>">
+            <input type="hidden" name="top_view" value="<?= e($topView) ?>">
+            <input type="hidden" name="top_month" value="<?= e($topMonth) ?>">
+            <input type="hidden" name="top_quarter" value="<?= e($topQuarter) ?>">
             <div class="form-group mb-0">
                 <select name="year" class="form-control" onchange="this.form.submit()">
                     <?php foreach ($years as $y): ?>
@@ -86,34 +91,73 @@
     </div>
 </div>
 
-<?php 
-$csvParams = "year={$year}&month={$month}&quarter={$quarter}&view={$viewType}";
-?>
+<!-- ============================================= -->
+<!-- TOP 20 독립 필터 바 -->
+<!-- ============================================= -->
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-body" style="padding:12px 20px;">
+        <div class="d-flex gap-2 flex-wrap align-center">
+            <span style="font-weight:600;color:var(--text);margin-right:8px;white-space:nowrap;">
+                <i class="fas fa-filter" style="color:var(--accent)"></i> TOP 20 조회 기간
+            </span>
+            <div class="form-group mb-0">
+                <select id="topYear" class="form-control" onchange="onTopFilterChange()">
+                    <?php foreach ($years as $y): ?>
+                    <option value="<?= $y['y'] ?>" <?= $y['y'] == $topYear ? 'selected' : '' ?>><?= $y['y'] ?>년</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group mb-0">
+                <select id="topView" class="form-control" onchange="onTopViewChange()">
+                    <option value="yearly" <?= $topView === 'yearly' ? 'selected' : '' ?>>년도 전체</option>
+                    <option value="quarterly" <?= $topView === 'quarterly' ? 'selected' : '' ?>>분기별</option>
+                    <option value="monthly" <?= $topView === 'monthly' ? 'selected' : '' ?>>월별</option>
+                </select>
+            </div>
+            <div class="form-group mb-0" id="topQuarterWrap" style="display:<?= $topView === 'quarterly' ? 'block' : 'none' ?>;">
+                <select id="topQuarter" class="form-control" onchange="onTopFilterChange()">
+                    <option value="1" <?= $topQuarter == '1' ? 'selected' : '' ?>>1분기 (1~3월)</option>
+                    <option value="2" <?= $topQuarter == '2' ? 'selected' : '' ?>>2분기 (4~6월)</option>
+                    <option value="3" <?= $topQuarter == '3' ? 'selected' : '' ?>>3분기 (7~9월)</option>
+                    <option value="4" <?= $topQuarter == '4' ? 'selected' : '' ?>>4분기 (10~12월)</option>
+                </select>
+            </div>
+            <div class="form-group mb-0" id="topMonthWrap" style="display:<?= $topView === 'monthly' ? 'block' : 'none' ?>;">
+                <select id="topMonth" class="form-control" onchange="onTopFilterChange()">
+                    <?php for ($m = 1; $m <= 12; $m++): ?>
+                    <option value="<?= $m ?>" <?= $m == $topMonth ? 'selected' : '' ?>><?= $m ?>월</option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+            <span id="topPeriodBadge" class="badge badge-manager" style="margin-left:8px;"><?= e($topPeriodLabel) ?></span>
+        </div>
+    </div>
+</div>
 
-<!-- Charts Row 2: Top 20 Companies -->
+<!-- Charts Row 2: Top 20 Companies + Vendors -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+    <!-- 매출 업체 TOP 20 -->
     <div class="card">
         <div class="card-header">
             <h3><i class="fas fa-building" style="color:var(--accent)"></i> 매출 업체 TOP 20</h3>
             <div class="d-flex gap-2 flex-wrap">
-                <span class="badge badge-manager"><?= e($periodLabel) ?></span>
                 <button class="btn btn-outline btn-sm" onclick="toggleDetail('company-detail')"><i class="fas fa-list"></i> 상세보기</button>
-                <a href="?page=dashboard&action=exportCompanies&<?= $csvParams ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
+                <a id="csvCompanyLink" href="?page=dashboard&action=exportCompanies&top_year=<?= e($topYear) ?>&top_view=<?= e($topView) ?>&top_month=<?= e($topMonth) ?>&top_quarter=<?= e($topQuarter) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
             </div>
         </div>
         <div class="card-body">
-            <?php if (empty($topCompanies)): ?>
-                <div class="empty-state"><i class="fas fa-chart-bar"></i><h4>데이터가 없습니다</h4></div>
-            <?php else: ?>
-                <div class="chart-container tall"><canvas id="topCompaniesChart"></canvas></div>
-            <?php endif; ?>
-            
-            <!-- Detail List -->
+            <div id="companyChartWrap">
+                <?php if (empty($topCompanies)): ?>
+                    <div class="empty-state"><i class="fas fa-chart-bar"></i><h4>데이터가 없습니다</h4></div>
+                <?php else: ?>
+                    <div class="chart-container tall"><canvas id="topCompaniesChart"></canvas></div>
+                <?php endif; ?>
+            </div>
             <div id="company-detail" style="display:none;margin-top:16px;">
                 <div class="table-responsive">
                     <table class="data-table">
                         <thead><tr><th>순위</th><th>업체명</th><th class="text-right">매출총액</th></tr></thead>
-                        <tbody>
+                        <tbody id="companyDetailBody">
                             <?php foreach ($allCompanies as $rank => $ac): ?>
                             <tr>
                                 <td><strong><?= $rank + 1 ?></strong></td>
@@ -127,28 +171,28 @@ $csvParams = "year={$year}&month={$month}&quarter={$quarter}&view={$viewType}";
             </div>
         </div>
     </div>
+    <!-- 매입 업체 TOP 20 -->
     <div class="card">
         <div class="card-header">
             <h3><i class="fas fa-truck" style="color:#E65100"></i> 매입 업체 TOP 20</h3>
             <div class="d-flex gap-2 flex-wrap">
-                <span class="badge badge-manager"><?= e($periodLabel) ?></span>
                 <button class="btn btn-outline btn-sm" onclick="toggleDetail('vendor-detail')"><i class="fas fa-list"></i> 상세보기</button>
-                <a href="?page=dashboard&action=exportVendors&<?= $csvParams ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
+                <a id="csvVendorLink" href="?page=dashboard&action=exportVendors&top_year=<?= e($topYear) ?>&top_view=<?= e($topView) ?>&top_month=<?= e($topMonth) ?>&top_quarter=<?= e($topQuarter) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
             </div>
         </div>
         <div class="card-body">
-            <?php if (empty($topVendors)): ?>
-                <div class="empty-state"><i class="fas fa-chart-bar"></i><h4>데이터가 없습니다</h4></div>
-            <?php else: ?>
-                <div class="chart-container tall"><canvas id="topVendorsChart"></canvas></div>
-            <?php endif; ?>
-            
-            <!-- Detail List -->
+            <div id="vendorChartWrap">
+                <?php if (empty($topVendors)): ?>
+                    <div class="empty-state"><i class="fas fa-chart-bar"></i><h4>데이터가 없습니다</h4></div>
+                <?php else: ?>
+                    <div class="chart-container tall"><canvas id="topVendorsChart"></canvas></div>
+                <?php endif; ?>
+            </div>
             <div id="vendor-detail" style="display:none;margin-top:16px;">
                 <div class="table-responsive">
                     <table class="data-table">
                         <thead><tr><th>순위</th><th>업체명</th><th class="text-right">매입총액</th></tr></thead>
-                        <tbody>
+                        <tbody id="vendorDetailBody">
                             <?php foreach ($allVendors as $rank => $av): ?>
                             <tr>
                                 <td><strong><?= $rank + 1 ?></strong></td>
@@ -176,9 +220,8 @@ $viewTypeJs = $viewType;
 
 $pageScript = <<<JS
 const fmtKRW = v => new Intl.NumberFormat('ko-KR').format(v) + '원';
+const fmtMoney = v => new Intl.NumberFormat('ko-KR').format(parseInt(v));
 
-// BUG FIX: 수직형 차트(세로 바/라인)용 툴팁 - ctx.parsed.y 사용
-// 값이 0인 경우도 정상 표시하기 위해 || 대신 직접 .y 참조
 const tooltipVertical = {
     callbacks: {
         label: function(ctx) {
@@ -189,10 +232,6 @@ const tooltipVertical = {
     }
 };
 
-// BUG FIX: 수평형 차트(indexAxis:'y')용 툴팁 - ctx.parsed.x 사용
-// 핵심 수정: 수평 바 차트에서는 금액이 x축에 있으므로 반드시 ctx.parsed.x를 사용해야 합니다.
-// 이전 코드 `ctx.parsed.y || ctx.parsed.x`는 y(인덱스 0,1,2...)가 truthy이면
-// 금액(x) 대신 인덱스 값을 표시하는 심각한 버그가 있었습니다.
 const tooltipHorizontal = {
     callbacks: {
         label: function(ctx) {
@@ -208,7 +247,7 @@ function toggleDetail(id) {
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
-// Sales Chart (수직형 바 차트 → tooltipVertical 사용)
+// ===== 상단 차트 (매출 분석 / 등록 수량) =====
 new Chart(document.getElementById('salesChart'), {
     type: 'bar',
     data: {
@@ -229,7 +268,6 @@ new Chart(document.getElementById('salesChart'), {
     }
 });
 
-// Count Chart (수직형 라인 차트)
 new Chart(document.getElementById('countChart'), {
     type: 'line',
     data: {
@@ -249,15 +287,23 @@ new Chart(document.getElementById('countChart'), {
     }
 });
 
-// Top Companies Chart (수평형 바 차트 → tooltipHorizontal 사용)
-var tcNames = $companyNames;
-var tcTotals = $companyTotals;
-if (tcNames.length > 0) {
-    new Chart(document.getElementById('topCompaniesChart'), {
+// ===== TOP20 차트 인스턴스 (AJAX로 갱신) =====
+var companyChart = null;
+var vendorChart = null;
+
+function createCompanyChart(names, totals) {
+    var wrap = document.getElementById('companyChartWrap');
+    if (names.length === 0) {
+        wrap.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><h4>데이터가 없습니다</h4></div>';
+        companyChart = null;
+        return;
+    }
+    wrap.innerHTML = '<div class="chart-container tall"><canvas id="topCompaniesChart"></canvas></div>';
+    companyChart = new Chart(document.getElementById('topCompaniesChart'), {
         type: 'bar',
         data: {
-            labels: tcNames,
-            datasets: [{ label: '매출액', data: tcTotals, backgroundColor: 'rgba(0,119,182,.65)', borderRadius: 3 }]
+            labels: names,
+            datasets: [{ label: '매출액', data: totals, backgroundColor: 'rgba(0,119,182,.65)', borderRadius: 3 }]
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
@@ -267,15 +313,19 @@ if (tcNames.length > 0) {
     });
 }
 
-// Top Vendors Chart (수평형 바 차트 → tooltipHorizontal 사용)
-var tvNames = $vendorNames;
-var tvTotals = $vendorTotals;
-if (tvNames.length > 0) {
-    new Chart(document.getElementById('topVendorsChart'), {
+function createVendorChart(names, totals) {
+    var wrap = document.getElementById('vendorChartWrap');
+    if (names.length === 0) {
+        wrap.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><h4>데이터가 없습니다</h4></div>';
+        vendorChart = null;
+        return;
+    }
+    wrap.innerHTML = '<div class="chart-container tall"><canvas id="topVendorsChart"></canvas></div>';
+    vendorChart = new Chart(document.getElementById('topVendorsChart'), {
         type: 'bar',
         data: {
-            labels: tvNames,
-            datasets: [{ label: '매입액', data: tvTotals, backgroundColor: 'rgba(230,81,0,.6)', borderRadius: 3 }]
+            labels: names,
+            datasets: [{ label: '매입액', data: totals, backgroundColor: 'rgba(230,81,0,.6)', borderRadius: 3 }]
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
@@ -283,6 +333,93 @@ if (tvNames.length > 0) {
             scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } }
         }
     });
+}
+
+// 초기 차트 렌더링
+createCompanyChart($companyNames, $companyTotals);
+createVendorChart($vendorNames, $vendorTotals);
+
+// ===== TOP20 독립 필터 핸들러 =====
+function getTopFilterParams() {
+    return {
+        top_year: document.getElementById('topYear').value,
+        top_view: document.getElementById('topView').value,
+        top_month: document.getElementById('topMonth').value,
+        top_quarter: document.getElementById('topQuarter').value,
+    };
+}
+
+function onTopViewChange() {
+    var v = document.getElementById('topView').value;
+    document.getElementById('topQuarterWrap').style.display = v === 'quarterly' ? 'block' : 'none';
+    document.getElementById('topMonthWrap').style.display = v === 'monthly' ? 'block' : 'none';
+    onTopFilterChange();
+}
+
+function onTopFilterChange() {
+    var p = getTopFilterParams();
+    var qs = 'page=dashboard&action=topData&top_year=' + p.top_year + '&top_view=' + p.top_view + '&top_month=' + p.top_month + '&top_quarter=' + p.top_quarter;
+    
+    // CSV 링크 업데이트
+    document.getElementById('csvCompanyLink').href = '?page=dashboard&action=exportCompanies&' + 'top_year=' + p.top_year + '&top_view=' + p.top_view + '&top_month=' + p.top_month + '&top_quarter=' + p.top_quarter;
+    document.getElementById('csvVendorLink').href = '?page=dashboard&action=exportVendors&' + 'top_year=' + p.top_year + '&top_view=' + p.top_view + '&top_month=' + p.top_month + '&top_quarter=' + p.top_quarter;
+    
+    // 히든 필드 업데이트 (상단 필터 submit 시에도 TOP20 상태 유지)
+    updateHiddenFields(p);
+    
+    // AJAX 호출
+    fetch('?' + qs)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            // 기간 뱃지 업데이트
+            document.getElementById('topPeriodBadge').textContent = data.periodLabel;
+            
+            // 차트 갱신
+            if (companyChart) { companyChart.destroy(); companyChart = null; }
+            if (vendorChart) { vendorChart.destroy(); vendorChart = null; }
+            createCompanyChart(data.companyNames, data.companyTotals);
+            createVendorChart(data.vendorNames, data.vendorTotals);
+            
+            // 상세 테이블 갱신
+            updateDetailTable('companyDetailBody', data.allCompanies, '매출총액');
+            updateDetailTable('vendorDetailBody', data.allVendors, '매입총액');
+        })
+        .catch(function(err) { console.error('TOP20 데이터 로드 실패:', err); });
+}
+
+function updateHiddenFields(p) {
+    var form = document.querySelector('form');
+    if (!form) return;
+    var fields = {top_year: p.top_year, top_view: p.top_view, top_month: p.top_month, top_quarter: p.top_quarter};
+    for (var key in fields) {
+        var input = form.querySelector('input[name="' + key + '"]');
+        if (input) input.value = fields[key];
+    }
+}
+
+function updateDetailTable(tbodyId, dataArr, label) {
+    var tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    if (!dataArr || dataArr.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px;">데이터가 없습니다</td></tr>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < dataArr.length; i++) {
+        var d = dataArr[i];
+        html += '<tr>';
+        html += '<td><strong>' + (i + 1) + '</strong></td>';
+        html += '<td>' + escapeHtml(d.name) + '</td>';
+        html += '<td class="money">' + fmtMoney(d.total) + '원</td>';
+        html += '</tr>';
+    }
+    tbody.innerHTML = html;
+}
+
+function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str || ''));
+    return div.innerHTML;
 }
 JS;
 ?>

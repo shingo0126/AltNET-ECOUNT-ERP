@@ -8,7 +8,13 @@ class DashboardController {
         $quarter = getParam('quarter', '');
         $viewType = getParam('view', 'monthly'); // monthly or quarterly
         
-        // Build date filter for period
+        // === TOP20 독립 필터 파라미터 ===
+        $topYear = getParam('top_year', $year);
+        $topView = getParam('top_view', 'yearly');  // yearly, quarterly, monthly
+        $topMonth = getParam('top_month', date('m'));
+        $topQuarter = getParam('top_quarter', '1');
+        
+        // Build date filter for summary period
         if ($viewType === 'quarterly' && $quarter) {
             $periodLabel = "{$year}년 {$quarter}분기";
         } else {
@@ -61,62 +67,13 @@ class DashboardController {
             [$year]
         );
         
-        // Top companies/vendors WHERE clause builder
-        $topCompanyWhere = "s.is_deleted=0 AND YEAR(s.sale_date)=?";
-        $topCompanyParams = [$year];
-        if ($viewType === 'quarterly' && $quarter) {
-            $topCompanyWhere .= " AND QUARTER(s.sale_date)=?";
-            $topCompanyParams[] = $quarter;
-        } else {
-            $topCompanyWhere .= " AND MONTH(s.sale_date)=?";
-            $topCompanyParams[] = $month;
-        }
-        
-        // Top 20 sales companies (for chart)
-        $topCompanies = $db->fetchAll(
-            "SELECT c.name, SUM(s.total_amount) as total 
-             FROM sales s JOIN companies c ON s.company_id=c.id 
-             WHERE $topCompanyWhere
-             GROUP BY c.id, c.name ORDER BY total DESC LIMIT 20",
-            $topCompanyParams
-        );
-        
-        // ALL sales companies ranked (for detail view)
-        $allCompanies = $db->fetchAll(
-            "SELECT c.name, SUM(s.total_amount) as total 
-             FROM sales s JOIN companies c ON s.company_id=c.id 
-             WHERE $topCompanyWhere
-             GROUP BY c.id, c.name ORDER BY total DESC",
-            $topCompanyParams
-        );
-        
-        $topVendorWhere = "p.is_deleted=0 AND YEAR(p.purchase_date)=?";
-        $topVendorParams = [$year];
-        if ($viewType === 'quarterly' && $quarter) {
-            $topVendorWhere .= " AND QUARTER(p.purchase_date)=?";
-            $topVendorParams[] = $quarter;
-        } else {
-            $topVendorWhere .= " AND MONTH(p.purchase_date)=?";
-            $topVendorParams[] = $month;
-        }
-        
-        // Top 20 purchase vendors (for chart)
-        $topVendors = $db->fetchAll(
-            "SELECT v.name, SUM(p.total_amount) as total 
-             FROM purchases p JOIN vendors v ON p.vendor_id=v.id 
-             WHERE $topVendorWhere
-             GROUP BY v.id, v.name ORDER BY total DESC LIMIT 20",
-            $topVendorParams
-        );
-        
-        // ALL purchase vendors ranked (for detail view)
-        $allVendors = $db->fetchAll(
-            "SELECT v.name, SUM(p.total_amount) as total 
-             FROM purchases p JOIN vendors v ON p.vendor_id=v.id 
-             WHERE $topVendorWhere
-             GROUP BY v.id, v.name ORDER BY total DESC",
-            $topVendorParams
-        );
+        // === TOP20 독립 필터를 사용한 쿼리 ===
+        $topResult = $this->buildTopData($db, $topYear, $topView, $topMonth, $topQuarter);
+        $topCompanies = $topResult['topCompanies'];
+        $allCompanies = $topResult['allCompanies'];
+        $topVendors = $topResult['topVendors'];
+        $allVendors = $topResult['allVendors'];
+        $topPeriodLabel = $topResult['periodLabel'];
         
         // Available years
         $years = $db->fetchAll(
@@ -142,67 +99,186 @@ class DashboardController {
         include __DIR__ . '/../views/layouts/main.php';
     }
     
-    public function exportCompanies() {
-        $db = Database::getInstance();
-        $year = getParam('year', date('Y'));
-        $month = getParam('month', date('m'));
-        $quarter = getParam('quarter', '');
-        $viewType = getParam('view', 'monthly');
+    /**
+     * TOP20 데이터 빌드 (독립 필터 기준)
+     */
+    private function buildTopData($db, $topYear, $topView, $topMonth, $topQuarter) {
+        // 매출 업체 WHERE
+        $companyWhere = "s.is_deleted=0 AND YEAR(s.sale_date)=?";
+        $companyParams = [$topYear];
         
-        $where = "s.is_deleted=0 AND YEAR(s.sale_date)=?";
-        $params = [$year];
-        if ($viewType === 'quarterly' && $quarter) {
-            $where .= " AND QUARTER(s.sale_date)=?";
-            $params[] = $quarter;
-            $label = "{$year}_{$quarter}Q";
+        // 매입 업체 WHERE
+        $vendorWhere = "p.is_deleted=0 AND YEAR(p.purchase_date)=?";
+        $vendorParams = [$topYear];
+        
+        // 기간 레이블
+        if ($topView === 'quarterly') {
+            $companyWhere .= " AND QUARTER(s.sale_date)=?";
+            $companyParams[] = $topQuarter;
+            $vendorWhere .= " AND QUARTER(p.purchase_date)=?";
+            $vendorParams[] = $topQuarter;
+            $qNames = ['', '1분기(1~3월)', '2분기(4~6월)', '3분기(7~9월)', '4분기(10~12월)'];
+            $periodLabel = "{$topYear}년 " . ($qNames[(int)$topQuarter] ?? "{$topQuarter}분기");
+        } elseif ($topView === 'monthly') {
+            $companyWhere .= " AND MONTH(s.sale_date)=?";
+            $companyParams[] = $topMonth;
+            $vendorWhere .= " AND MONTH(p.purchase_date)=?";
+            $vendorParams[] = $topMonth;
+            $periodLabel = "{$topYear}년 {$topMonth}월";
         } else {
-            $where .= " AND MONTH(s.sale_date)=?";
-            $params[] = $month;
-            $label = "{$year}_{$month}";
+            // yearly - 년도 전체
+            $periodLabel = "{$topYear}년 전체";
         }
         
-        $data = $db->fetchAll(
+        // Top 20 매출 업체
+        $topCompanies = $db->fetchAll(
             "SELECT c.name, SUM(s.total_amount) as total 
              FROM sales s JOIN companies c ON s.company_id=c.id 
-             WHERE $where GROUP BY c.id, c.name ORDER BY total DESC",
-            $params
+             WHERE $companyWhere
+             GROUP BY c.id, c.name ORDER BY total DESC LIMIT 20",
+            $companyParams
         );
         
-        AuditLog::log('EXPORT', 'companies', null, null, null, "매출업체 순위 CSV 다운로드 ({$label})");
+        // 전체 매출 업체
+        $allCompanies = $db->fetchAll(
+            "SELECT c.name, SUM(s.total_amount) as total 
+             FROM sales s JOIN companies c ON s.company_id=c.id 
+             WHERE $companyWhere
+             GROUP BY c.id, c.name ORDER BY total DESC",
+            $companyParams
+        );
         
-        $rows = array_map(function($d, $i) { return [$i + 1, $d['name'], number_format($d['total'])]; }, $data, array_keys($data));
-        csvExport("매출업체순위_{$label}.csv", ['순위', '업체명', '매출총액'], $rows);
-    }
-    
-    public function exportVendors() {
-        $db = Database::getInstance();
-        $year = getParam('year', date('Y'));
-        $month = getParam('month', date('m'));
-        $quarter = getParam('quarter', '');
-        $viewType = getParam('view', 'monthly');
-        
-        $where = "p.is_deleted=0 AND YEAR(p.purchase_date)=?";
-        $params = [$year];
-        if ($viewType === 'quarterly' && $quarter) {
-            $where .= " AND QUARTER(p.purchase_date)=?";
-            $params[] = $quarter;
-            $label = "{$year}_{$quarter}Q";
-        } else {
-            $where .= " AND MONTH(p.purchase_date)=?";
-            $params[] = $month;
-            $label = "{$year}_{$month}";
-        }
-        
-        $data = $db->fetchAll(
+        // Top 20 매입 업체
+        $topVendors = $db->fetchAll(
             "SELECT v.name, SUM(p.total_amount) as total 
              FROM purchases p JOIN vendors v ON p.vendor_id=v.id 
-             WHERE $where GROUP BY v.id, v.name ORDER BY total DESC",
-            $params
+             WHERE $vendorWhere
+             GROUP BY v.id, v.name ORDER BY total DESC LIMIT 20",
+            $vendorParams
         );
         
-        AuditLog::log('EXPORT', 'vendors', null, null, null, "매입업체 순위 CSV 다운로드 ({$label})");
+        // 전체 매입 업체
+        $allVendors = $db->fetchAll(
+            "SELECT v.name, SUM(p.total_amount) as total 
+             FROM purchases p JOIN vendors v ON p.vendor_id=v.id 
+             WHERE $vendorWhere
+             GROUP BY v.id, v.name ORDER BY total DESC",
+            $vendorParams
+        );
         
-        $rows = array_map(function($d, $i) { return [$i + 1, $d['name'], number_format($d['total'])]; }, $data, array_keys($data));
-        csvExport("매입업체순위_{$label}.csv", ['순위', '업체명', '매입총액'], $rows);
+        return compact('topCompanies', 'allCompanies', 'topVendors', 'allVendors', 'periodLabel');
+    }
+    
+    /**
+     * TOP20 JSON API (AJAX용)
+     */
+    public function topData() {
+        $db = Database::getInstance();
+        $topYear = getParam('top_year', date('Y'));
+        $topView = getParam('top_view', 'yearly');
+        $topMonth = getParam('top_month', date('m'));
+        $topQuarter = getParam('top_quarter', '1');
+        
+        $result = $this->buildTopData($db, $topYear, $topView, $topMonth, $topQuarter);
+        
+        jsonResponse([
+            'companyNames'  => array_column($result['topCompanies'], 'name'),
+            'companyTotals' => array_map('intval', array_column($result['topCompanies'], 'total')),
+            'vendorNames'   => array_column($result['topVendors'], 'name'),
+            'vendorTotals'  => array_map('intval', array_column($result['topVendors'], 'total')),
+            'allCompanies'  => $result['allCompanies'],
+            'allVendors'    => $result['allVendors'],
+            'periodLabel'   => $result['periodLabel'],
+        ]);
+    }
+    
+    /**
+     * 매출업체 CSV 내보내기
+     */
+    public function exportCompanies() {
+        $db = Database::getInstance();
+        $topYear = getParam('top_year', getParam('year', date('Y')));
+        $topView = getParam('top_view', 'yearly');
+        $topMonth = getParam('top_month', getParam('month', date('m')));
+        $topQuarter = getParam('top_quarter', getParam('quarter', '1'));
+        
+        $result = $this->buildTopData($db, $topYear, $topView, $topMonth, $topQuarter);
+        $data = $result['allCompanies'];
+        $periodLabel = $result['periodLabel'];
+        
+        // 파일명 및 내부 레이블 생성
+        $fileInfo = $this->buildExportLabel('매출업체순위', $topYear, $topView, $topMonth, $topQuarter);
+        
+        AuditLog::log('EXPORT', 'companies', null, null, null, "매출업체 순위 CSV 다운로드 ({$periodLabel})");
+        
+        // CSV 헤더에 기간 정보를 포함
+        $rows = [];
+        // 첫 행: 기간 정보
+        $rows[] = ['조회기간', $periodLabel, ''];
+        $rows[] = ['', '', ''];  // 빈 줄
+        // 데이터 행
+        foreach ($data as $i => $d) {
+            $rows[] = [$i + 1, $d['name'], number_format($d['total'])];
+        }
+        // 합계
+        $grandTotal = array_sum(array_column($data, 'total'));
+        $rows[] = ['', '', ''];
+        $rows[] = ['합계', count($data) . '개사', number_format($grandTotal)];
+        
+        csvExport($fileInfo['filename'], ['순위', '업체명', '매출총액(원)'], $rows);
+    }
+    
+    /**
+     * 매입업체 CSV 내보내기
+     */
+    public function exportVendors() {
+        $db = Database::getInstance();
+        $topYear = getParam('top_year', getParam('year', date('Y')));
+        $topView = getParam('top_view', 'yearly');
+        $topMonth = getParam('top_month', getParam('month', date('m')));
+        $topQuarter = getParam('top_quarter', getParam('quarter', '1'));
+        
+        $result = $this->buildTopData($db, $topYear, $topView, $topMonth, $topQuarter);
+        $data = $result['allVendors'];
+        $periodLabel = $result['periodLabel'];
+        
+        $fileInfo = $this->buildExportLabel('매입업체순위', $topYear, $topView, $topMonth, $topQuarter);
+        
+        AuditLog::log('EXPORT', 'vendors', null, null, null, "매입업체 순위 CSV 다운로드 ({$periodLabel})");
+        
+        $rows = [];
+        $rows[] = ['조회기간', $periodLabel, ''];
+        $rows[] = ['', '', ''];
+        foreach ($data as $i => $d) {
+            $rows[] = [$i + 1, $d['name'], number_format($d['total'])];
+        }
+        $grandTotal = array_sum(array_column($data, 'total'));
+        $rows[] = ['', '', ''];
+        $rows[] = ['합계', count($data) . '개사', number_format($grandTotal)];
+        
+        csvExport($fileInfo['filename'], ['순위', '업체명', '매입총액(원)'], $rows);
+    }
+    
+    /**
+     * 내보내기 레이블/파일명 생성
+     */
+    private function buildExportLabel($prefix, $topYear, $topView, $topMonth, $topQuarter) {
+        if ($topView === 'quarterly') {
+            $qNames = ['', '1Q', '2Q', '3Q', '4Q'];
+            $suffix = "{$topYear}_{$qNames[(int)$topQuarter]}";
+            $label = "{$topYear}년 {$topQuarter}분기";
+        } elseif ($topView === 'monthly') {
+            $mm = str_pad($topMonth, 2, '0', STR_PAD_LEFT);
+            $suffix = "{$topYear}_{$mm}";
+            $label = "{$topYear}년 {$topMonth}월";
+        } else {
+            $suffix = "{$topYear}_전체";
+            $label = "{$topYear}년 전체";
+        }
+        
+        return [
+            'filename' => "{$prefix}_{$suffix}.csv",
+            'label'    => $label,
+        ];
     }
 }
