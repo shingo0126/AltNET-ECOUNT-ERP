@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Backups (contain sensitive data)
+backups/*.sql
+
+# Logs
+logs/*.log
+
+# Environment
+.env
+.dev.vars
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime
+/tmp/
+*.swp
+*.swo

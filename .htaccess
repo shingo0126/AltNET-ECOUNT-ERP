@@ -1,0 +1,12 @@
+RewriteEngine On
+
+# Deny access to sensitive directories
+RewriteRule ^(config|core|models|controllers|database|logs|backups)/ - [F,L]
+
+# Allow direct access to assets
+RewriteRule ^assets/ - [L]
+
+# Route all requests through index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
