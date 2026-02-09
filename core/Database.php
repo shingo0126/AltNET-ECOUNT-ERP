@@ -10,6 +10,8 @@ class Database {
         $config = require __DIR__ . '/../config/database.php';
         $dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};charset={$config['charset']}";
         $this->pdo = new PDO($dsn, $config['username'], $config['password'], $config['options']);
+        $this->pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+        $this->pdo->exec("SET CHARACTER SET utf8mb4");
     }
 
     public static function getInstance() {

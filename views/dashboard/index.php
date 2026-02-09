@@ -86,12 +86,20 @@
     </div>
 </div>
 
-<!-- Charts Row 2: Top 20 Companies + Vendors -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+<?php 
+$csvParams = "year={$year}&month={$month}&quarter={$quarter}&view={$viewType}";
+?>
+
+<!-- Charts Row 2: Top 20 Companies -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
     <div class="card">
         <div class="card-header">
             <h3><i class="fas fa-building" style="color:var(--accent)"></i> 매출 업체 TOP 20</h3>
-            <span class="badge badge-manager"><?= $viewType === 'monthly' ? "{$year}년 {$month}월" : "{$year}년 {$quarter}분기" ?></span>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="badge badge-manager"><?= e($periodLabel) ?></span>
+                <button class="btn btn-outline btn-sm" onclick="toggleDetail('company-detail')"><i class="fas fa-list"></i> 상세보기</button>
+                <a href="?page=dashboard&action=exportCompanies&<?= $csvParams ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
+            </div>
         </div>
         <div class="card-body">
             <?php if (empty($topCompanies)): ?>
@@ -99,12 +107,34 @@
             <?php else: ?>
                 <div class="chart-container tall"><canvas id="topCompaniesChart"></canvas></div>
             <?php endif; ?>
+            
+            <!-- Detail List -->
+            <div id="company-detail" style="display:none;margin-top:16px;">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead><tr><th>순위</th><th>업체명</th><th class="text-right">매출총액</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($allCompanies as $rank => $ac): ?>
+                            <tr>
+                                <td><strong><?= $rank + 1 ?></strong></td>
+                                <td><?= e($ac['name']) ?></td>
+                                <td class="money"><?= formatMoney($ac['total']) ?>원</td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
     <div class="card">
         <div class="card-header">
             <h3><i class="fas fa-truck" style="color:#E65100"></i> 매입 업체 TOP 20</h3>
-            <span class="badge badge-manager"><?= $viewType === 'monthly' ? "{$year}년 {$month}월" : "{$year}년 {$quarter}분기" ?></span>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="badge badge-manager"><?= e($periodLabel) ?></span>
+                <button class="btn btn-outline btn-sm" onclick="toggleDetail('vendor-detail')"><i class="fas fa-list"></i> 상세보기</button>
+                <a href="?page=dashboard&action=exportVendors&<?= $csvParams ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
+            </div>
         </div>
         <div class="card-body">
             <?php if (empty($topVendors)): ?>
@@ -112,6 +142,24 @@
             <?php else: ?>
                 <div class="chart-container tall"><canvas id="topVendorsChart"></canvas></div>
             <?php endif; ?>
+            
+            <!-- Detail List -->
+            <div id="vendor-detail" style="display:none;margin-top:16px;">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead><tr><th>순위</th><th>업체명</th><th class="text-right">매입총액</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($allVendors as $rank => $av): ?>
+                            <tr>
+                                <td><strong><?= $rank + 1 ?></strong></td>
+                                <td><?= e($av['name']) ?></td>
+                                <td class="money"><?= formatMoney($av['total']) ?>원</td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -131,6 +179,11 @@ const fmtKRW = v => new Intl.NumberFormat('ko-KR').format(v) + '원';
 const tooltipCb = {
     callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtKRW(ctx.parsed.y || ctx.parsed.x) }
 };
+
+function toggleDetail(id) {
+    var el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
 
 // Sales Chart
 new Chart(document.getElementById('salesChart'), {
@@ -213,6 +266,7 @@ JS;
 
 <style>
 @media (max-width: 768px) {
-    div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+    div[style*="grid-template-columns: 1fr 1fr"],
+    div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
 }
 </style>

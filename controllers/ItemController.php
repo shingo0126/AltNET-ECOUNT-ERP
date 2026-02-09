@@ -6,14 +6,71 @@ class ItemController {
         $totalCount = $db->count('sale_items', 'is_deleted=0');
         $items = $db->fetchAll("SELECT * FROM sale_items WHERE is_deleted=0 ORDER BY sort_order");
         
-        // Item analysis - usage stats
+        // Item analysis - quantity stats (SUM of sale_details.quantity per sale_item)
         $itemStats = $db->fetchAll(
-            "SELECT si.id, si.sort_order, si.name, COUNT(s.id) as usage_count, COALESCE(SUM(s.total_amount),0) as total_amount
+            "SELECT si.id, si.sort_order, si.name, 
+                    COALESCE(SUM(sd.quantity), 0) as total_quantity,
+                    COALESCE(SUM(sd.subtotal), 0) as total_amount
              FROM sale_items si 
              LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
+             LEFT JOIN sale_details sd ON sd.sale_id=s.id
              WHERE si.is_deleted=0 
              GROUP BY si.id, si.sort_order, si.name 
-             ORDER BY usage_count DESC"
+             ORDER BY si.sort_order"
+        );
+        
+        // TOP 30 by quantity
+        $top30Qty = $db->fetchAll(
+            "SELECT si.id, si.sort_order, si.name, 
+                    COALESCE(SUM(sd.quantity), 0) as total_quantity,
+                    COALESCE(SUM(sd.subtotal), 0) as total_amount
+             FROM sale_items si 
+             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
+             LEFT JOIN sale_details sd ON sd.sale_id=s.id
+             WHERE si.is_deleted=0 
+             GROUP BY si.id, si.sort_order, si.name 
+             ORDER BY total_quantity DESC
+             LIMIT 30"
+        );
+        
+        // TOP 30 by amount
+        $top30Amt = $db->fetchAll(
+            "SELECT si.id, si.sort_order, si.name, 
+                    COALESCE(SUM(sd.quantity), 0) as total_quantity,
+                    COALESCE(SUM(sd.subtotal), 0) as total_amount
+             FROM sale_items si 
+             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
+             LEFT JOIN sale_details sd ON sd.sale_id=s.id
+             WHERE si.is_deleted=0 
+             GROUP BY si.id, si.sort_order, si.name 
+             ORDER BY total_amount DESC
+             LIMIT 30"
+        );
+        
+        // All items ranked by quantity (for detail view)
+        $allByQty = $db->fetchAll(
+            "SELECT si.id, si.sort_order, si.name, 
+                    COALESCE(SUM(sd.quantity), 0) as total_quantity,
+                    COALESCE(SUM(sd.subtotal), 0) as total_amount
+             FROM sale_items si 
+             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
+             LEFT JOIN sale_details sd ON sd.sale_id=s.id
+             WHERE si.is_deleted=0 
+             GROUP BY si.id, si.sort_order, si.name 
+             ORDER BY total_quantity DESC"
+        );
+        
+        // All items ranked by amount (for detail view)
+        $allByAmt = $db->fetchAll(
+            "SELECT si.id, si.sort_order, si.name, 
+                    COALESCE(SUM(sd.quantity), 0) as total_quantity,
+                    COALESCE(SUM(sd.subtotal), 0) as total_amount
+             FROM sale_items si 
+             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
+             LEFT JOIN sale_details sd ON sd.sale_id=s.id
+             WHERE si.is_deleted=0 
+             GROUP BY si.id, si.sort_order, si.name 
+             ORDER BY total_amount DESC"
         );
         
         $pageTitle = '판매 제품 코드 관리';
@@ -43,7 +100,6 @@ class ItemController {
             $db->update('sale_items', ['name' => $name], 'id=?', [$id]);
             AuditLog::log('UPDATE', 'sale_items', $id, $old, ['name' => $name]);
         } else {
-            // Auto sort_order
             $maxSort = $db->fetch("SELECT MAX(sort_order) as m FROM sale_items")['m'] ?? 0;
             $sortOrder = (int)$maxSort + 1;
             $id = $db->insert('sale_items', ['sort_order' => $sortOrder, 'name' => $name]);
@@ -77,16 +133,50 @@ class ItemController {
         csvExport('판매제품코드.csv', ['구분자', '구분'], array_map(function($i){ return [$i['sort_order'], $i['name']]; }, $items));
     }
     
-    public function exportStats() {
+    public function exportStatsQty() {
         $db = Database::getInstance();
         $stats = $db->fetchAll(
-            "SELECT si.sort_order, si.name, COUNT(s.id) as cnt, COALESCE(SUM(s.total_amount),0) as total
-             FROM sale_items si LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
-             WHERE si.is_deleted=0 GROUP BY si.id ORDER BY cnt DESC"
+            "SELECT si.sort_order, si.name, 
+                    COALESCE(SUM(sd.quantity), 0) as total_quantity,
+                    COALESCE(SUM(sd.subtotal), 0) as total_amount
+             FROM sale_items si 
+             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
+             LEFT JOIN sale_details sd ON sd.sale_id=s.id
+             WHERE si.is_deleted=0 
+             GROUP BY si.id, si.sort_order, si.name
+             ORDER BY total_quantity DESC"
         );
-        AuditLog::log('EXPORT', 'sale_items', null, null, null, '제품코드 통계 CSV 다운로드');
+        AuditLog::log('EXPORT', 'sale_items', null, null, null, '제품코드 수량통계 CSV 다운로드');
         
-        $rows = array_map(function($s) { return [$s['sort_order'] . '.' . $s['name'], $s['cnt'], number_format($s['total'])]; }, $stats);
-        csvExport('제품코드통계.csv', ['제품코드', '사용횟수', '매출총액'], $rows);
+        $rows = array_map(function($s, $i) { 
+            return [$i + 1, $s['sort_order'] . '.' . $s['name'], number_format($s['total_quantity']), number_format($s['total_amount'])]; 
+        }, $stats, array_keys($stats));
+        csvExport('제품코드_수량통계.csv', ['순위', '제품코드', '판매수량', '매출금액'], $rows);
+    }
+    
+    public function exportStatsAmt() {
+        $db = Database::getInstance();
+        $stats = $db->fetchAll(
+            "SELECT si.sort_order, si.name, 
+                    COALESCE(SUM(sd.quantity), 0) as total_quantity,
+                    COALESCE(SUM(sd.subtotal), 0) as total_amount
+             FROM sale_items si 
+             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
+             LEFT JOIN sale_details sd ON sd.sale_id=s.id
+             WHERE si.is_deleted=0 
+             GROUP BY si.id, si.sort_order, si.name
+             ORDER BY total_amount DESC"
+        );
+        AuditLog::log('EXPORT', 'sale_items', null, null, null, '제품코드 매출통계 CSV 다운로드');
+        
+        $rows = array_map(function($s, $i) { 
+            return [$i + 1, $s['sort_order'] . '.' . $s['name'], number_format($s['total_quantity']), number_format($s['total_amount'])]; 
+        }, $stats, array_keys($stats));
+        csvExport('제품코드_매출통계.csv', ['순위', '제품코드', '판매수량', '매출금액'], $rows);
+    }
+    
+    // Keep old exportStats for backward compat
+    public function exportStats() {
+        $this->exportStatsQty();
     }
 }

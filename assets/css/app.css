@@ -699,43 +699,50 @@ select.form-control {
 
 .line-item {
     display: grid;
-    grid-template-columns: 1fr 120px 80px 140px 36px;
-    gap: 8px;
+    grid-template-columns: minmax(100px, 2fr) minmax(90px, 1.2fr) 70px minmax(90px, 1.2fr) 32px;
+    gap: 6px;
     align-items: center;
-    padding: 8px 0;
+    padding: 6px 0;
     border-bottom: 1px solid var(--border-light);
 }
 
 .line-item:last-child { border-bottom: none; }
 
-.line-item .form-control { font-size: 12.5px; padding: 7px 8px; }
+.line-item .form-control { font-size: 12px; padding: 6px 7px; min-width: 0; }
 
 .line-item .btn-remove {
-    width: 30px; height: 30px;
+    width: 28px; height: 28px;
+    min-width: 28px;
     border: none;
     background: #FFEBEE;
     color: var(--danger);
     border-radius: 50%;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all .2s;
+    flex-shrink: 0;
 }
 
 .line-item .btn-remove:hover { background: var(--danger); color: #fff; }
 
 .line-item-header {
     display: grid;
-    grid-template-columns: 1fr 120px 80px 140px 36px;
-    gap: 8px;
+    grid-template-columns: minmax(100px, 2fr) minmax(90px, 1.2fr) 70px minmax(90px, 1.2fr) 32px;
+    gap: 6px;
     padding: 6px 0;
     font-size: 11px;
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
     border-bottom: 1px solid var(--border);
+}
+
+.line-item .input-money {
+    min-width: 0;
+    text-align: right;
 }
 
 .total-row {
@@ -811,11 +818,16 @@ select.form-control {
     .stat-grid { grid-template-columns: repeat(2, 1fr); }
 
     .line-item {
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
+        grid-template-columns: 1fr 1fr 1fr 1fr 28px;
+        gap: 4px;
     }
 
-    .line-item-header { display: none; }
+    .line-item-header { 
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 28px;
+        gap: 4px;
+        font-size: 10px;
+    }
 
     .line-item .form-control { font-size: 12px; }
 

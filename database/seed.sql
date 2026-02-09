@@ -1,7 +1,9 @@
 -- ============================================
 -- AltNET Ecount ERP - Initial Seed Data
+-- Run with: mysql -u root --default-character-set=utf8mb4 altnet_ecount < database/seed.sql
 -- ============================================
 
+SET NAMES utf8mb4;
 USE altnet_ecount;
 
 -- 초기 관리자 계정 (altnet / altnet2016!)

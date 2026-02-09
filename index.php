@@ -7,6 +7,10 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/logs/error.log');
 
+// Force UTF-8 output
+header('Content-Type: text/html; charset=UTF-8');
+mb_internal_encoding('UTF-8');
+
 // Load core files
 require_once __DIR__ . '/core/Database.php';
 require_once __DIR__ . '/core/Session.php';

@@ -7,8 +7,8 @@ if (preg_match('/\.(css|js|png|jpg|gif|ico|svg|woff2?|ttf|eot)$/', $path)) {
     $file = __DIR__ . $path;
     if (file_exists($file)) {
         $mimeTypes = [
-            'css' => 'text/css',
-            'js' => 'application/javascript',
+            'css' => 'text/css; charset=UTF-8',
+            'js' => 'application/javascript; charset=UTF-8',
             'png' => 'image/png',
             'jpg' => 'image/jpeg',
             'gif' => 'image/gif',
