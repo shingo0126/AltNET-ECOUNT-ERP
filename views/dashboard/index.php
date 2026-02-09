@@ -176,8 +176,31 @@ $viewTypeJs = $viewType;
 
 $pageScript = <<<JS
 const fmtKRW = v => new Intl.NumberFormat('ko-KR').format(v) + '원';
-const tooltipCb = {
-    callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtKRW(ctx.parsed.y || ctx.parsed.x) }
+
+// BUG FIX: 수직형 차트(세로 바/라인)용 툴팁 - ctx.parsed.y 사용
+// 값이 0인 경우도 정상 표시하기 위해 || 대신 직접 .y 참조
+const tooltipVertical = {
+    callbacks: {
+        label: function(ctx) {
+            var val = ctx.parsed.y;
+            if (val === null || val === undefined) val = 0;
+            return ctx.dataset.label + ': ' + fmtKRW(val);
+        }
+    }
+};
+
+// BUG FIX: 수평형 차트(indexAxis:'y')용 툴팁 - ctx.parsed.x 사용
+// 핵심 수정: 수평 바 차트에서는 금액이 x축에 있으므로 반드시 ctx.parsed.x를 사용해야 합니다.
+// 이전 코드 `ctx.parsed.y || ctx.parsed.x`는 y(인덱스 0,1,2...)가 truthy이면
+// 금액(x) 대신 인덱스 값을 표시하는 심각한 버그가 있었습니다.
+const tooltipHorizontal = {
+    callbacks: {
+        label: function(ctx) {
+            var val = ctx.parsed.x;
+            if (val === null || val === undefined) val = 0;
+            return ctx.dataset.label + ': ' + fmtKRW(val);
+        }
+    }
 };
 
 function toggleDetail(id) {
@@ -185,7 +208,7 @@ function toggleDetail(id) {
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
-// Sales Chart
+// Sales Chart (수직형 바 차트 → tooltipVertical 사용)
 new Chart(document.getElementById('salesChart'), {
     type: 'bar',
     data: {
@@ -201,12 +224,12 @@ new Chart(document.getElementById('salesChart'), {
     },
     options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { tooltip: tooltipCb, legend: { display: false } },
+        plugins: { tooltip: tooltipVertical, legend: { display: false } },
         scales: { y: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } }
     }
 });
 
-// Count Chart
+// Count Chart (수직형 라인 차트)
 new Chart(document.getElementById('countChart'), {
     type: 'line',
     data: {
@@ -221,12 +244,12 @@ new Chart(document.getElementById('countChart'), {
     },
     options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { tooltip: { callbacks: { label: ctx => ctx.parsed.y + '건' } }, legend: { display: false } },
+        plugins: { tooltip: { callbacks: { label: function(ctx) { return (ctx.parsed.y || 0) + '건'; } } }, legend: { display: false } },
         scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
     }
 });
 
-// Top Companies Chart
+// Top Companies Chart (수평형 바 차트 → tooltipHorizontal 사용)
 var tcNames = $companyNames;
 var tcTotals = $companyTotals;
 if (tcNames.length > 0) {
@@ -238,13 +261,13 @@ if (tcNames.length > 0) {
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-            plugins: { tooltip: tooltipCb, legend: { display: false } },
+            plugins: { tooltip: tooltipHorizontal, legend: { display: false } },
             scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } }
         }
     });
 }
 
-// Top Vendors Chart
+// Top Vendors Chart (수평형 바 차트 → tooltipHorizontal 사용)
 var tvNames = $vendorNames;
 var tvTotals = $vendorTotals;
 if (tvNames.length > 0) {
@@ -256,7 +279,7 @@ if (tvNames.length > 0) {
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-            plugins: { tooltip: tooltipCb, legend: { display: false } },
+            plugins: { tooltip: tooltipHorizontal, legend: { display: false } },
             scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } }
         }
     });
