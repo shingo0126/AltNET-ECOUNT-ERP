@@ -12,8 +12,13 @@ class Session {
         
         ini_set('session.cookie_httponly', 1);
         ini_set('session.use_strict_mode', 1);
-        ini_set('session.cookie_samesite', 'Lax');
         ini_set('session.gc_maxlifetime', $config['session_timeout']);
+        
+        // session.cookie_samesite는 PHP 7.3+ 전용
+        // PHP 7.1/7.2에서는 이 설정이 무시되므로 버전 체크 후 적용
+        if (version_compare(PHP_VERSION, '7.3.0', '>=')) {
+            ini_set('session.cookie_samesite', 'Lax');
+        }
         
         session_start();
         self::$started = true;
