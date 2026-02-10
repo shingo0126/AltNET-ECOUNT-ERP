@@ -194,8 +194,47 @@ $pageScript = <<<JS
 var purchaseIdx = document.querySelectorAll('.purchase-block').length;
 var vendorsData = $vendorsJson;
 
-// Flatpickr init
-flatpickr('.datepicker', { locale: 'ko', dateFormat: 'Y-m-d', defaultDate: 'today' });
+// === Flatpickr 초기화 (과거일자 선택 가능, 기존 값 보존) ===
+// 매출일자: 기존 값이 있으면 그 값 사용, 없으면 오늘
+var saleDateInput = document.getElementById('sale_date');
+var saleDateVal = saleDateInput ? saleDateInput.value : '';
+flatpickr('#sale_date', { 
+    locale: 'ko', 
+    dateFormat: 'Y-m-d', 
+    defaultDate: saleDateVal || 'today',
+    allowInput: true,
+    onChange: function(selectedDates, dateStr) {
+        // 매출일자 변경 시 매출번호 자동 갱신 (신규 등록 시에만)
+        var saleIdField = document.querySelector('input[name="sale_id"]');
+        if (!saleIdField) {
+            updateSaleNumber(dateStr);
+        }
+    }
+});
+
+// 매입일자 datepicker: 기존 값 보존
+document.querySelectorAll('.purchase-block .datepicker').forEach(function(el) {
+    var existingVal = el.value;
+    flatpickr(el, { 
+        locale: 'ko', 
+        dateFormat: 'Y-m-d', 
+        defaultDate: existingVal || 'today',
+        allowInput: true
+    });
+});
+
+// === 매출번호 자동갱신 AJAX (매출일자 변경 시) ===
+function updateSaleNumber(dateStr) {
+    if (!dateStr) return;
+    fetch('?page=sales&action=generateNumber&date=' + encodeURIComponent(dateStr))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.sale_number) {
+                document.querySelector('input[name="sale_number"]').value = data.sale_number;
+            }
+        })
+        .catch(function(err) { console.error('매출번호 갱신 실패:', err); });
+}
 
 // Add sale line
 function addSaleLine() {
@@ -257,7 +296,7 @@ function addPurchaseBlock() {
         '<strong style="color:#E65100;font-size:13px;">매입 #' + (purchaseIdx+1) + '</strong>' +
         '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\\'.purchase-block\\').remove();calcPurchaseTotals();">삭제</button></div>' +
         '<div class="form-row">' +
-        '<div class="form-group"><label class="form-label">매입일자</label><input type="text" name="p_date[]" class="form-control datepicker" value="' + new Date().toISOString().slice(0,10) + '"></div>' +
+        '<div class="form-group"><label class="form-label">매입일자</label><input type="text" name="p_date[]" class="form-control datepicker" value="' + (document.getElementById('sale_date').value || new Date().toISOString().slice(0,10)) + '"></div>' +
         '<div class="form-group"><label class="form-label">매입 업체</label><select name="p_vendor_id[]" class="form-control">' + opts + '</select></div></div>' +
         '<div class="line-item-header"><span>제품명</span><span>단가</span><span>수량</span><span>소계</span><span></span></div>' +
         '<div class="purchase-lines line-items">' +
@@ -276,7 +315,12 @@ function addPurchaseBlock() {
     
     document.getElementById('purchase-blocks').insertAdjacentHTML('beforeend', html);
     purchaseIdx++;
-    flatpickr('.datepicker:last-of-type', { locale: 'ko', dateFormat: 'Y-m-d', defaultDate: 'today' });
+    // 매입 추가 시 매출일자와 동일한 날짜로 기본 설정
+    var currentSaleDate = document.getElementById('sale_date').value || 'today';
+    var newDatepickers = document.querySelectorAll('.purchase-block:last-child .datepicker');
+    newDatepickers.forEach(function(el) {
+        flatpickr(el, { locale: 'ko', dateFormat: 'Y-m-d', defaultDate: currentSaleDate, allowInput: true });
+    });
     initMoneyInputs();
 }
 

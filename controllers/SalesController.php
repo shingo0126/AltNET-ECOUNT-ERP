@@ -49,8 +49,9 @@ class SalesController {
         $companies = $db->fetchAll("SELECT id, name FROM companies WHERE is_deleted=0 ORDER BY name");
         $vendors = $db->fetchAll("SELECT id, name FROM vendors WHERE is_deleted=0 ORDER BY name");
         $saleItems = $db->fetchAll("SELECT id, sort_order, name FROM sale_items WHERE is_deleted=0 ORDER BY sort_order");
-        $saleNumber = generateSaleNumber();
-        $purchaseNumber = generatePurchaseNumber();
+        // 오늘 날짜 기준 초기 매출번호 (일자 변경 시 AJAX로 재생성)
+        $saleNumber = generateSaleNumber(date('Y-m-d'));
+        $purchaseNumber = generatePurchaseNumber(date('Y-m-d'));
         
         $sale = null;
         $saleDetails = [];
@@ -120,12 +121,19 @@ class SalesController {
             if ($isEdit) {
                 $saleId = (int)postParam('sale_id');
                 $old = $db->fetch("SELECT * FROM sales WHERE id=?", [$saleId]);
+                
+                // 수정 시에도 매출일자가 변경되었으면 매출번호 재생성
+                if ($old && $old['sale_date'] !== $saleData['sale_date']) {
+                    $saleData['sale_number'] = generateSaleNumber($saleData['sale_date']);
+                }
+                
                 $db->update('sales', $saleData, 'id=?', [$saleId]);
                 
                 // Delete old details and re-insert
                 $db->delete('sale_details', 'sale_id=?', [$saleId]);
                 AuditLog::log('UPDATE', 'sales', $saleId, $old, $saleData);
             } else {
+                // 폼에서 전달된 매출번호 사용 (매출일자 기반으로 이미 생성됨)
                 $saleData['sale_number'] = postParam('sale_number', generateSaleNumber($saleData['sale_date']));
                 $saleId = $db->insert('sales', $saleData);
                 AuditLog::log('INSERT', 'sales', $saleId, null, $saleData);
@@ -238,6 +246,19 @@ class SalesController {
         }
         
         redirect('?page=sales');
+    }
+    
+    /**
+     * AJAX API: 매출일자 기준 매출번호 자동생성
+     */
+    public function generateNumber() {
+        $date = getParam('date', date('Y-m-d'));
+        $saleNumber = generateSaleNumber($date);
+        $purchaseNumber = generatePurchaseNumber($date);
+        jsonResponse([
+            'sale_number' => $saleNumber,
+            'purchase_number' => $purchaseNumber,
+        ]);
     }
     
     public function export() {

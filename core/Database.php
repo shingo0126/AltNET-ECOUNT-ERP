@@ -12,6 +12,8 @@ class Database {
         $this->pdo = new PDO($dsn, $config['username'], $config['password'], $config['options']);
         $this->pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
         $this->pdo->exec("SET CHARACTER SET utf8mb4");
+        // 대한민국 시간대 (KST = UTC+9) - 모든 DATETIME/TIMESTAMP에 반영
+        $this->pdo->exec("SET time_zone = '+09:00'");
     }
 
     public static function getInstance() {

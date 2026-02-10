@@ -11,6 +11,9 @@ ini_set('error_log', __DIR__ . '/logs/error.log');
 header('Content-Type: text/html; charset=UTF-8');
 mb_internal_encoding('UTF-8');
 
+// 대한민국 시간대 설정 (KST = UTC+9)
+date_default_timezone_set('Asia/Seoul');
+
 // Load core files
 require_once __DIR__ . '/core/Database.php';
 require_once __DIR__ . '/core/Session.php';
