@@ -5,38 +5,77 @@
 class Session {
     private static $started = false;
 
+    /**
+     * 경로가 파일시스템 디렉토리 경로인지 확인
+     * tcp://, redis://, memcached:// 등 네트워크 URI는 false 반환
+     */
+    private static function isLocalPath($path) {
+        if (empty($path)) return false;
+        // 프로토콜(scheme)이 포함된 URI는 파일시스템 경로가 아님
+        if (preg_match('#^[a-zA-Z][a-zA-Z0-9+\-.]*://#', $path)) return false;
+        return true;
+    }
+
     public static function start() {
         if (self::$started) return;
         
         $config = require __DIR__ . '/../config/app.php';
         
-        // ★ 세션 저장 경로 확인 및 자동 생성 (다단계 폴백)
-        $savePath = session_save_path();
+        // ★ 세션 핸들러 확인: files가 아니면(memcached, redis 등) 경로 검사 불필요
+        $handler = ini_get('session.save_handler');
         
-        // 1단계: 기본 경로가 비어있거나 존재하지 않으면 폴백
-        if (empty($savePath) || !is_dir($savePath)) {
-            $savePath = sys_get_temp_dir() . '/php_sessions';
-            if (!is_dir($savePath)) {
-                @mkdir($savePath, 0733, true);
+        // session.save_handler가 'files'인 경우에만 디렉토리 검사/폴백 수행
+        if ($handler === 'files' || $handler === 'file' || empty($handler)) {
+            $savePath = session_save_path();
+            
+            // ★ 네트워크 URI(tcp:// 등)가 설정되어 있으면 → 파일 기반으로 강제 전환
+            if (!empty($savePath) && !self::isLocalPath($savePath)) {
+                // tcp:// 같은 네트워크 경로가 save_path에 설정된 비정상 상태
+                // → 파일 기반 세션으로 강제 전환
+                ini_set('session.save_handler', 'files');
+                $savePath = ''; // 아래 폴백 로직으로 진입
             }
-            session_save_path($savePath);
-        }
-        
-        // 2단계: 쓰기 권한 확인, 불가하면 대체 경로 시도
-        if (!is_writable($savePath)) {
-            $fallbackPaths = [
-                sys_get_temp_dir() . '/php_sessions_erp',
-                __DIR__ . '/../tmp/sessions',
-                '/tmp/php_sessions_erp',
-            ];
-            foreach ($fallbackPaths as $fallback) {
-                if (!is_dir($fallback)) {
-                    @mkdir($fallback, 0733, true);
+            
+            // 1단계: 기본 경로가 비어있거나 존재하지 않으면 폴백
+            if (empty($savePath) || !@is_dir($savePath)) {
+                $savePath = sys_get_temp_dir() . '/php_sessions';
+                if (!@is_dir($savePath)) {
+                    @mkdir($savePath, 0733, true);
                 }
-                if (is_dir($fallback) && is_writable($fallback)) {
-                    session_save_path($fallback);
-                    break;
+                session_save_path($savePath);
+            }
+            
+            // 2단계: 쓰기 권한 확인, 불가하면 대체 경로 시도
+            if (!@is_writable($savePath)) {
+                $fallbackPaths = [
+                    sys_get_temp_dir() . '/php_sessions_erp',
+                    __DIR__ . '/../tmp/sessions',
+                    '/tmp/php_sessions_erp',
+                ];
+                foreach ($fallbackPaths as $fallback) {
+                    if (!@is_dir($fallback)) {
+                        @mkdir($fallback, 0733, true);
+                    }
+                    if (@is_dir($fallback) && @is_writable($fallback)) {
+                        session_save_path($fallback);
+                        break;
+                    }
                 }
+            }
+        } else {
+            // memcached, redis 등 네트워크 기반 세션 핸들러
+            // → save_path는 tcp://... 형태이므로 파일시스템 검사 스킵
+            $savePath = session_save_path();
+            
+            // 네트워크 핸들러가 설정되어 있지만 해당 확장이 로드되지 않은 경우
+            // → files로 폴백하여 세션이 아예 작동하지 않는 상황 방지
+            if (!extension_loaded($handler)) {
+                ini_set('session.save_handler', 'files');
+                $fallbackPath = sys_get_temp_dir() . '/php_sessions';
+                if (!@is_dir($fallbackPath)) {
+                    @mkdir($fallbackPath, 0733, true);
+                }
+                session_save_path($fallbackPath);
             }
         }
         
