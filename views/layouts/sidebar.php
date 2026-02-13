@@ -24,6 +24,9 @@
         <a href="?page=items" class="<?= $cp === 'items' ? 'active' : '' ?>">
             <i class="fas fa-tags"></i> 판매 제품 코드
         </a>
+        <a href="?page=taxinvoice" class="<?= $cp === 'taxinvoice' ? 'active' : '' ?>">
+            <i class="fas fa-file-invoice"></i> 세금계산서 발행요청
+        </a>
         
         <div class="nav-divider"></div>
         

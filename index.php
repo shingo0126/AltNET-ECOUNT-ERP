@@ -59,6 +59,7 @@ $controllerMap = [
     'users'      => 'UserController',
     'backup'     => 'BackupController',
     'audit'      => 'AuditController',
+    'taxinvoice' => 'TaxInvoiceController',
 ];
 
 if ($page === 'logout') {

@@ -184,6 +184,46 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
+-- 11. 세금계산서 발행 요청 헤더 테이블
+-- ============================================
+CREATE TABLE IF NOT EXISTS tax_invoices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    request_date DATE NOT NULL,
+    company_id INT NOT NULL,
+    project_name VARCHAR(300) DEFAULT NULL,
+    total_amount BIGINT NOT NULL DEFAULT 0,
+    vat_amount BIGINT NOT NULL DEFAULT 0,
+    status ENUM('requested','pending','completed') NOT NULL DEFAULT 'requested',
+    user_id INT NOT NULL,
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+    deleted_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_ti_date (request_date),
+    INDEX idx_ti_company (company_id),
+    INDEX idx_ti_status (status),
+    INDEX idx_ti_deleted (is_deleted)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- 12. 세금계산서 발행 요청 상세 테이블
+-- ============================================
+CREATE TABLE IF NOT EXISTS tax_invoice_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tax_invoice_id INT NOT NULL,
+    product_name VARCHAR(300) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    unit_price BIGINT NOT NULL DEFAULT 0,
+    subtotal BIGINT NOT NULL DEFAULT 0,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (tax_invoice_id) REFERENCES tax_invoices(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
 -- 인덱스
 -- ============================================
 CREATE INDEX idx_sales_date ON sales(sale_date);
