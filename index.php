@@ -2,13 +2,20 @@
 /**
  * AltNET Ecount ERP - Main Entry Point / Router
  */
+
+// ★ Output Buffering을 가장 먼저 활성화
+// → header(), session_start(), redirect() 등이 어떤 순서로 호출되어도
+//   실제 출력은 스크립트 종료 시점에 한꺼번에 전송됨
+if (!ob_get_level()) {
+    ob_start();
+}
+
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/logs/error.log');
 
-// Force UTF-8 output
-header('Content-Type: text/html; charset=UTF-8');
+// Force UTF-8
 mb_internal_encoding('UTF-8');
 
 // 대한민국 시간대 설정 (KST = UTC+9)

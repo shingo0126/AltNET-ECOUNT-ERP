@@ -12,6 +12,16 @@ function formatMoney($amount) {
 }
 
 function redirect($url) {
+    // ★ 세션 데이터를 디스크에 확실히 기록한 후 리다이렉트
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
+    
+    // ★ output buffer를 플러시하여 모든 헤더가 정상 전송되도록 보장
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
     header("Location: $url");
     exit;
 }

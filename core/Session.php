@@ -10,12 +10,45 @@ class Session {
         
         $config = require __DIR__ . '/../config/app.php';
         
+        // ★ 세션 저장 경로 확인 및 자동 생성 (다단계 폴백)
+        $savePath = session_save_path();
+        
+        // 1단계: 기본 경로가 비어있거나 존재하지 않으면 폴백
+        if (empty($savePath) || !is_dir($savePath)) {
+            $savePath = sys_get_temp_dir() . '/php_sessions';
+            if (!is_dir($savePath)) {
+                @mkdir($savePath, 0733, true);
+            }
+            session_save_path($savePath);
+        }
+        
+        // 2단계: 쓰기 권한 확인, 불가하면 대체 경로 시도
+        if (!is_writable($savePath)) {
+            $fallbackPaths = [
+                sys_get_temp_dir() . '/php_sessions_erp',
+                __DIR__ . '/../tmp/sessions',
+                '/tmp/php_sessions_erp',
+            ];
+            foreach ($fallbackPaths as $fallback) {
+                if (!is_dir($fallback)) {
+                    @mkdir($fallback, 0733, true);
+                }
+                if (is_dir($fallback) && is_writable($fallback)) {
+                    session_save_path($fallback);
+                    break;
+                }
+            }
+        }
+        
         ini_set('session.cookie_httponly', 1);
         ini_set('session.use_strict_mode', 1);
+        ini_set('session.use_only_cookies', 1);
         ini_set('session.gc_maxlifetime', $config['session_timeout']);
         
+        // 세션 쿠키 path를 '/'로 설정 (서브디렉토리 환경 대응)
+        ini_set('session.cookie_path', '/');
+        
         // session.cookie_samesite는 PHP 7.3+ 전용
-        // PHP 7.1/7.2에서는 이 설정이 무시되므로 버전 체크 후 적용
         if (version_compare(PHP_VERSION, '7.3.0', '>=')) {
             ini_set('session.cookie_samesite', 'Lax');
         }

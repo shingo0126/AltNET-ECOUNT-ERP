@@ -6,6 +6,9 @@ RewriteRule ^(config|core|models|controllers|database|logs|backups)/ - [F,L]
 # Allow direct access to assets
 RewriteRule ^assets/ - [L]
 
+# Allow direct access to diagnose.php (진단 도구 - 사용 후 삭제)
+RewriteRule ^diagnose\.php$ - [L]
+
 # Route all requests through index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

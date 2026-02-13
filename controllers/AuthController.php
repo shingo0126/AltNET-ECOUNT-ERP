@@ -19,6 +19,8 @@ class AuthController {
             } else {
                 $result = Auth::attempt($username, $password);
                 if ($result['success']) {
+                    // ★ 세션 ID를 재생성하여 세션 고정 공격 방지 + 새 세션 쿠키 발급 보장
+                    session_regenerate_id(true);
                     redirect('?page=dashboard');
                 } else {
                     $error = $result['message'];
@@ -26,6 +28,8 @@ class AuthController {
             }
         }
         
+        // ★ Content-Type은 실제 HTML 렌더링 직전에만 설정
+        header('Content-Type: text/html; charset=UTF-8');
         include __DIR__ . '/../views/auth/login.php';
     }
 }

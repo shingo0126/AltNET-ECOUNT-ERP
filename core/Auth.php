@@ -67,8 +67,7 @@ class Auth {
     
     public static function requireLogin() {
         if (!self::check()) {
-            header('Location: ?page=login');
-            exit;
+            redirect('?page=login');
         }
     }
     
