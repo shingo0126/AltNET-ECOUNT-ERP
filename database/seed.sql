@@ -7,9 +7,9 @@ SET NAMES utf8mb4;
 USE altnet_ecount;
 
 -- 초기 관리자 계정 (altnet / altnet2016!)
--- bcrypt hash of 'altnet2016!'
+-- bcrypt hash of 'altnet2016!' (PHP password_hash 검증 완료)
 INSERT INTO users (username, password_hash, name, email, role, is_active) VALUES
-('altnet', '$2y$10$8K1p/a0dL1LXMIgoEDFrwOBvFkhbvMJf9bBlKQo/gE6N5mJLfLhHe', '관리자', 'admin@altnet.co.kr', 'admin', 1);
+('altnet', '$2y$10$eH0u2V8UpCuDEfRWyQGZ3O7Ha99tXv2R9FNVnyfewjhsokwCUh0I6', '관리자', 'admin@altnet.co.kr', 'admin', 1);
 
 -- 샘플 매출 업체
 INSERT INTO companies (name, contact_person, phone, email, zipcode, address, address_detail) VALUES
