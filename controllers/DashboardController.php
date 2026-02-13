@@ -102,6 +102,17 @@ class DashboardController {
         $years = [];
         foreach ($yearSet as $y => $v) { $years[] = ['y' => $y]; }
         
+        // ===== 세금계산서 발행 요청 최근 5건 =====
+        $recentTaxInvoices = $db->fetchAll(
+            "SELECT t.id, t.request_date, t.project_name, t.total_amount, t.status, t.created_at,
+                    c.name as company_name
+             FROM tax_invoices t
+             LEFT JOIN companies c ON t.company_id=c.id
+             WHERE t.is_deleted=0
+             ORDER BY t.created_at DESC
+             LIMIT 5"
+        );
+        
         $pageTitle = '대시보드';
         
         // Prepare chart data - 매출

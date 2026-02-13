@@ -26,14 +26,19 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 </div>
 
 <!-- 집계 카드 -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
     <div class="stat-card" style="border-left:4px solid #2E7D4F;">
-        <div class="stat-label"><i class="fas fa-clock" style="color:#2E7D4F;"></i> 발행 요청 건수</div>
-        <div class="stat-value" style="color:#2E7D4F;"><?= number_format($reqCount) ?></div>
-        <div class="stat-sub">건 (요청 + 보류)</div>
+        <div class="stat-label"><i class="fas fa-paper-plane" style="color:#2E7D4F;"></i> 발행 요청</div>
+        <div class="stat-value" style="color:#2E7D4F;"><?= number_format($reqOnlyCount) ?></div>
+        <div class="stat-sub">건</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #E89B23;">
+        <div class="stat-label"><i class="fas fa-pause-circle" style="color:#E89B23;"></i> 보류</div>
+        <div class="stat-value" style="color:#E89B23;"><?= number_format($pendingCount) ?></div>
+        <div class="stat-sub">건</div>
     </div>
     <div class="stat-card" style="border-left:4px solid #0077B6;">
-        <div class="stat-label"><i class="fas fa-check-circle" style="color:#0077B6;"></i> 발행 완료 건수</div>
+        <div class="stat-label"><i class="fas fa-check-circle" style="color:#0077B6;"></i> 발행 완료</div>
         <div class="stat-value" style="color:#0077B6;"><?= number_format($compCount) ?></div>
         <div class="stat-sub">건</div>
     </div>
@@ -174,7 +179,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 
 <!-- ===== 발행 요청 등록/수정 팝업 ===== -->
 <div id="tiPopup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:700px;max-width:95vw;max-height:90vh;overflow-y:auto;background:#fff;border-radius:12px;
+    width:780px;max-width:95vw;max-height:90vh;overflow-y:auto;background:#fff;border-radius:12px;
     box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:9999;">
     <form method="POST" action="?page=taxinvoice&action=save" id="tiForm">
         <?= CSRF::field() ?>
@@ -219,11 +224,11 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
             <div class="form-label" style="margin-top:12px;margin-bottom:6px;">
                 <i class="fas fa-box" style="color:var(--accent);"></i> 제품 내역
             </div>
-            <div class="line-item-header">
+            <div class="ti-line-item-header">
                 <span>제품명</span><span>수량</span><span>단가</span><span>소계</span><span></span>
             </div>
             <div id="ti-lines" class="line-items">
-                <div class="line-item">
+                <div class="ti-line-item">
                     <input type="text" name="ti_product_name[]" class="form-control" placeholder="제품명 입력" required>
                     <input type="number" name="ti_quantity[]" class="form-control" value="1" min="1" oninput="calcTiLine(this)">
                     <input type="text" name="ti_unit_price[]" class="form-control input-money" placeholder="단가" oninput="calcTiLine(this)">
@@ -287,7 +292,7 @@ function openCreatePopup() {
     
     // 제품 라인 초기화 (1줄만)
     var lines = document.getElementById('ti-lines');
-    lines.innerHTML = '<div class="line-item">' +
+    lines.innerHTML = '<div class="ti-line-item">' +
         '<input type="text" name="ti_product_name[]" class="form-control" placeholder="제품명 입력" required>' +
         '<input type="number" name="ti_quantity[]" class="form-control" value="1" min="1" oninput="calcTiLine(this)">' +
         '<input type="text" name="ti_unit_price[]" class="form-control input-money" placeholder="단가" oninput="calcTiLine(this)">' +
@@ -325,7 +330,7 @@ function openEditPopup(id) {
             lines.innerHTML = '';
             if (det.length === 0) det = [{ product_name: '', quantity: 1, unit_price: 0, subtotal: 0 }];
             det.forEach(function(d) {
-                lines.innerHTML += '<div class="line-item">' +
+                lines.innerHTML += '<div class="ti-line-item">' +
                     '<input type="text" name="ti_product_name[]" class="form-control" placeholder="제품명 입력" required value="' + escHtml(d.product_name) + '">' +
                     '<input type="number" name="ti_quantity[]" class="form-control" value="' + d.quantity + '" min="1" oninput="calcTiLine(this)">' +
                     '<input type="text" name="ti_unit_price[]" class="form-control input-money" value="' + fmtNum(d.unit_price) + '" oninput="calcTiLine(this)">' +
@@ -373,7 +378,7 @@ function initTiDatepicker(defaultVal) {
 
 // ===== 제품 라인 추가/삭제/계산 =====
 function addTiLine() {
-    var html = '<div class="line-item">' +
+    var html = '<div class="ti-line-item">' +
         '<input type="text" name="ti_product_name[]" class="form-control" placeholder="제품명 입력" required>' +
         '<input type="number" name="ti_quantity[]" class="form-control" value="1" min="1" oninput="calcTiLine(this)">' +
         '<input type="text" name="ti_unit_price[]" class="form-control input-money" placeholder="단가" oninput="calcTiLine(this)">' +
@@ -385,14 +390,14 @@ function addTiLine() {
 
 function removeTiLine(btn) {
     var container = btn.closest('.line-items');
-    if (container.querySelectorAll('.line-item').length > 1) {
-        btn.closest('.line-item').remove();
+    if (container.querySelectorAll('.ti-line-item').length > 1) {
+        btn.closest('.ti-line-item').remove();
         calcTiTotal();
     }
 }
 
 function calcTiLine(el) {
-    var row = el.closest('.line-item');
+    var row = el.closest('.ti-line-item');
     var price = parseNumber(row.querySelector('[name="ti_unit_price[]"]').value);
     var qty = parseInt(row.querySelector('[name="ti_quantity[]"]').value) || 1;
     row.querySelector('.ti-subtotal').value = formatNumber(price * qty);

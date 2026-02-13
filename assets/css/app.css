@@ -760,6 +760,76 @@ select.form-control {
     color: var(--text);
 }
 
+/* ===== TAX INVOICE LINE ITEMS (세금계산서 팝업 전용) ===== */
+/* 수량: 55px (100단위까지), 단가/소계: 넉넉한 1.8fr (100,000,000 표현) */
+.ti-line-item {
+    display: grid;
+    grid-template-columns: minmax(100px, 2fr) 55px minmax(110px, 1.8fr) minmax(110px, 1.8fr) 32px;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.ti-line-item:last-child { border-bottom: none; }
+
+.ti-line-item .form-control { font-size: 12px; padding: 6px 7px; min-width: 0; }
+
+.ti-line-item .btn-remove {
+    width: 28px; height: 28px;
+    min-width: 28px;
+    border: none;
+    background: #FFEBEE;
+    color: var(--danger);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+    flex-shrink: 0;
+}
+
+.ti-line-item .btn-remove:hover { background: var(--danger); color: #fff; }
+
+.ti-line-item-header {
+    display: grid;
+    grid-template-columns: minmax(100px, 2fr) 55px minmax(110px, 1.8fr) minmax(110px, 1.8fr) 32px;
+    gap: 6px;
+    padding: 6px 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+}
+
+.ti-line-item .input-money {
+    min-width: 0;
+    text-align: right;
+}
+
+/* ===== NEW 배지 깜박임 효과 ===== */
+@keyframes blink-new {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.badge-new {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    background: #E53935;
+    letter-spacing: 0.5px;
+    animation: blink-new 1.2s ease-in-out infinite;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
 /* ===== CHART CONTAINERS ===== */
 .chart-container {
     position: relative;

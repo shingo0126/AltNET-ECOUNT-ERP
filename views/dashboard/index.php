@@ -90,6 +90,59 @@
     </div>
 </div>
 
+<!-- 세금계산서 발행 요청 최근 5건 -->
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-header">
+        <h3><i class="fas fa-file-invoice" style="color:var(--accent)"></i> 세금계산서 발행 요청 (최근 5건)</h3>
+        <a href="?page=taxinvoice" class="btn btn-outline btn-sm"><i class="fas fa-arrow-right"></i> 전체 보기</a>
+    </div>
+    <div class="card-body" style="padding:12px 20px;">
+        <?php if (empty($recentTaxInvoices)): ?>
+            <div class="empty-state" style="padding:20px;"><i class="fas fa-inbox"></i><h4>등록된 발행 요청이 없습니다</h4></div>
+        <?php else: ?>
+        <?php
+        $tiStatusLabels = ['requested' => '요청', 'pending' => '보류', 'completed' => '완료'];
+        $tiStatusColors = ['requested' => '#2E7D4F', 'pending' => '#E89B23', 'completed' => '#0077B6'];
+        $tiStatusBg     = ['requested' => '#E8F5E9', 'pending' => '#FFF3E0', 'completed' => '#E0F2FE'];
+        $now = time();
+        ?>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>요청일자</th>
+                        <th>매출업체</th>
+                        <th>프로젝트</th>
+                        <th class="text-right">총액</th>
+                        <th style="width:80px;text-align:center;">처리상태</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($recentTaxInvoices as $ti): ?>
+                    <?php $isNew = ($now - strtotime($ti['created_at'])) < (3 * 24 * 3600); ?>
+                    <tr>
+                        <td style="white-space:nowrap;">
+                            <?= e($ti['request_date']) ?>
+                            <?php if ($isNew): ?><span class="badge-new">NEW</span><?php endif; ?>
+                        </td>
+                        <td><strong><?= e($ti['company_name']) ?></strong></td>
+                        <td><?= e($ti['project_name']) ?></td>
+                        <td class="money"><?= formatMoney($ti['total_amount']) ?>원</td>
+                        <td style="text-align:center;">
+                            <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;
+                                color:<?= $tiStatusColors[$ti['status']] ?>;background:<?= $tiStatusBg[$ti['status']] ?>;">
+                                <?= $tiStatusLabels[$ti['status']] ?>
+                            </span>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+
 <!-- TOP 20 독립 필터 바 -->
 <div class="card" style="margin-bottom:20px;">
     <div class="card-body" style="padding:12px 20px;">

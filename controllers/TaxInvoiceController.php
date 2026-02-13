@@ -15,9 +15,13 @@ class TaxInvoiceController {
         $isAdmin = Auth::hasRole(['admin']);
         
         // === 집계 카운트 ===
-        $reqCount = (int)$db->fetch(
-            "SELECT COUNT(*) as cnt FROM tax_invoices WHERE is_deleted=0 AND status IN ('requested','pending')"
+        $reqOnlyCount = (int)$db->fetch(
+            "SELECT COUNT(*) as cnt FROM tax_invoices WHERE is_deleted=0 AND status='requested'"
         )['cnt'];
+        $pendingCount = (int)$db->fetch(
+            "SELECT COUNT(*) as cnt FROM tax_invoices WHERE is_deleted=0 AND status='pending'"
+        )['cnt'];
+        $reqCount = $reqOnlyCount + $pendingCount;
         $compCount = (int)$db->fetch(
             "SELECT COUNT(*) as cnt FROM tax_invoices WHERE is_deleted=0 AND status='completed'"
         )['cnt'];
