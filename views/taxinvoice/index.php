@@ -291,8 +291,9 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         
         <!-- 팝업 하단 버튼 -->
         <div id="tiPopupFooter" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#FAFAFA;border-radius:0 0 12px 12px;">
-            <button type="button" class="btn btn-outline" onclick="closePopup()"><i class="fas fa-times"></i> 취소</button>
+            <button type="button" class="btn btn-outline" id="tiCancelBtn" onclick="closePopup()"><i class="fas fa-times"></i> 취소</button>
             <button type="submit" class="btn btn-primary" id="tiSubmitBtn"><i class="fas fa-save"></i> 등록</button>
+            <button type="button" class="btn btn-outline" id="tiCloseBtn" onclick="closePopup()" style="display:none;"><i class="fas fa-times"></i> 닫기</button>
         </div>
     </form>
 </div>
@@ -409,9 +410,11 @@ function loadInvoiceData(id, readOnly) {
 function setFormEditable(editable) {
     var form = document.getElementById('tiForm');
     var fields = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
-    var footer = document.getElementById('tiPopupFooter');
     var addLineBtn = document.getElementById('tiAddLineBtn');
     var removeBtns = form.querySelectorAll('.btn-remove');
+    var cancelBtn = document.getElementById('tiCancelBtn');
+    var submitBtn = document.getElementById('tiSubmitBtn');
+    var closeBtn = document.getElementById('tiCloseBtn');
     
     fields.forEach(function(f) {
         if (editable) {
@@ -425,12 +428,15 @@ function setFormEditable(editable) {
     if (addLineBtn) addLineBtn.style.display = editable ? '' : 'none';
     removeBtns.forEach(function(b) { b.style.display = editable ? '' : 'none'; });
     
-    // 하단 버튼 영역
+    // 하단 버튼: show/hide 방식 (★ innerHTML 교체하지 않음 → tiSubmitBtn 보존)
     if (editable) {
-        footer.innerHTML = '<button type="button" class="btn btn-outline" onclick="closePopup()"><i class="fas fa-times"></i> 취소</button>' +
-            '<button type="submit" class="btn btn-primary" id="tiSubmitBtn"><i class="fas fa-save"></i> 등록</button>';
+        if (cancelBtn) cancelBtn.style.display = '';
+        if (submitBtn) submitBtn.style.display = '';
+        if (closeBtn) closeBtn.style.display = 'none';
     } else {
-        footer.innerHTML = '<button type="button" class="btn btn-outline" onclick="closePopup()"><i class="fas fa-times"></i> 닫기</button>';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        if (submitBtn) submitBtn.style.display = 'none';
+        if (closeBtn) closeBtn.style.display = '';
     }
 }
 
