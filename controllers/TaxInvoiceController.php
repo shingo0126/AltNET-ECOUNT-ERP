@@ -71,13 +71,15 @@ class TaxInvoiceController {
         try {
             $db->beginTransaction();
             
+            $status = postParam('status', 'requested');
             $data = [
                 'request_date'  => postParam('request_date', date('Y-m-d')),
                 'company_id'    => (int)postParam('company_id'),
                 'project_name'  => trim(postParam('project_name', '')),
                 'total_amount'  => (int)str_replace(',', '', postParam('total_amount', '0')),
                 'vat_amount'    => (int)str_replace(',', '', postParam('vat_amount', '0')),
-                'status'        => postParam('status', 'requested'),
+                'status'        => $status,
+                'pending_reason' => ($status === 'pending') ? trim(postParam('pending_reason', '')) : null,
                 'user_id'       => Session::getUserId(),
             ];
             

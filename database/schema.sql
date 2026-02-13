@@ -194,6 +194,7 @@ CREATE TABLE IF NOT EXISTS tax_invoices (
     total_amount BIGINT NOT NULL DEFAULT 0,
     vat_amount BIGINT NOT NULL DEFAULT 0,
     status ENUM('requested','pending','completed') NOT NULL DEFAULT 'requested',
+    pending_reason TEXT DEFAULT NULL,
     user_id INT NOT NULL,
     is_deleted TINYINT(1) NOT NULL DEFAULT 0,
     deleted_at DATETIME DEFAULT NULL,

@@ -61,12 +61,13 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         <th>프로젝트</th>
                         <th class="text-right">총액</th>
                         <th style="width:80px;text-align:center;">처리상태</th>
-                        <?php if ($isAdmin): ?><th style="width:80px;text-align:center;">관리</th><?php endif; ?>
+                        <th style="width:160px;">보류 사유</th>
+                        <th style="width:80px;text-align:center;">관리</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($requestList)): ?>
-                    <tr><td colspan="<?= $isAdmin ? 7 : 6 ?>" class="text-center" style="padding:30px;color:var(--text-muted);">발행 요청 건이 없습니다.</td></tr>
+                    <tr><td colspan="8" class="text-center" style="padding:30px;color:var(--text-muted);">발행 요청 건이 없습니다.</td></tr>
                     <?php else: ?>
                     <?php foreach ($requestList as $idx => $r): ?>
                     <tr>
@@ -81,13 +82,24 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                                 <?= $statusLabels[$r['status']] ?>
                             </span>
                         </td>
-                        <?php if ($isAdmin): ?>
+                        <td>
+                            <?php if ($r['status'] === 'pending' && !empty($r['pending_reason'])): ?>
+                            <div style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#E89B23;cursor:help;"
+                                 title="<?= e($r['pending_reason']) ?>">
+                                <?= e($r['pending_reason']) ?>
+                            </div>
+                            <?php else: ?>
+                            <span style="color:var(--text-muted);font-size:12px;">-</span>
+                            <?php endif; ?>
+                        </td>
                         <td style="text-align:center;white-space:nowrap;">
+                            <button class="btn btn-outline btn-sm" onclick="openViewPopup(<?= $r['id'] ?>)" title="보기"><i class="fas fa-eye"></i></button>
+                            <?php if ($isAdmin): ?>
                             <button class="btn btn-outline btn-sm" onclick="openEditPopup(<?= $r['id'] ?>)" title="편집"><i class="fas fa-edit"></i></button>
                             <a href="?page=taxinvoice&action=delete&id=<?= $r['id'] ?>&token=<?= e($csrfToken) ?>" 
                                class="btn btn-danger btn-sm" onclick="return confirm('삭제하시겠습니까?')" title="삭제"><i class="fas fa-trash"></i></a>
+                            <?php endif; ?>
                         </td>
-                        <?php endif; ?>
                     </tr>
                     <?php endforeach; ?>
                     <?php endif; ?>
@@ -127,7 +139,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         <th>프로젝트</th>
                         <th class="text-right">총액</th>
                         <th style="width:80px;text-align:center;">처리상태</th>
-                        <?php if ($isAdmin): ?><th style="width:80px;text-align:center;">관리</th><?php endif; ?>
+                        <?php if ($isAdmin): ?><th style="width:60px;text-align:center;">관리</th><?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -147,7 +159,6 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         </td>
                         <?php if ($isAdmin): ?>
                         <td style="text-align:center;white-space:nowrap;">
-                            <button class="btn btn-outline btn-sm" onclick="openEditPopup(<?= $r['id'] ?>)" title="편집"><i class="fas fa-edit"></i></button>
                             <a href="?page=taxinvoice&action=delete&id=<?= $r['id'] ?>&token=<?= e($csrfToken) ?>" 
                                class="btn btn-danger btn-sm" onclick="return confirm('삭제하시겠습니까?')" title="삭제"><i class="fas fa-trash"></i></a>
                         </td>
@@ -177,7 +188,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <!-- ===== 팝업 오버레이 ===== -->
 <div id="tiPopupOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:9998;"></div>
 
-<!-- ===== 발행 요청 등록/수정 팝업 ===== -->
+<!-- ===== 발행 요청 등록/수정/보기 팝업 ===== -->
 <div id="tiPopup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
     width:780px;max-width:95vw;max-height:90vh;overflow-y:auto;background:#fff;border-radius:12px;
     box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:9999;">
@@ -236,7 +247,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                     <button type="button" class="btn-remove" onclick="removeTiLine(this)"><i class="fas fa-times"></i></button>
                 </div>
             </div>
-            <button type="button" class="btn btn-outline btn-sm" onclick="addTiLine()" style="margin-top:6px;">
+            <button type="button" class="btn btn-outline btn-sm" id="tiAddLineBtn" onclick="addTiLine()" style="margin-top:6px;">
                 <i class="fas fa-plus"></i> 제품 추가
             </button>
             
@@ -259,20 +270,27 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                 <label class="form-label">처리 상태</label>
                 <div class="d-flex gap-2">
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 16px;border:2px solid #2E7D4F;border-radius:8px;font-weight:600;color:#2E7D4F;background:#E8F5E9;">
-                        <input type="radio" name="status" value="requested" checked> 요청
+                        <input type="radio" name="status" value="requested" checked onchange="togglePendingReason()"> 요청
                     </label>
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 16px;border:2px solid #E89B23;border-radius:8px;font-weight:600;color:#E89B23;background:#FFF3E0;">
-                        <input type="radio" name="status" value="pending"> 보류
+                        <input type="radio" name="status" value="pending" onchange="togglePendingReason()"> 보류
                     </label>
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 16px;border:2px solid #0077B6;border-radius:8px;font-weight:600;color:#0077B6;background:#E0F2FE;">
-                        <input type="radio" name="status" value="completed"> 완료
+                        <input type="radio" name="status" value="completed" onchange="togglePendingReason()"> 완료
                     </label>
                 </div>
+            </div>
+            
+            <!-- 보류 사유 (보류 선택시만 활성화) -->
+            <div class="form-group" id="pendingReasonWrap" style="display:none;margin-top:8px;">
+                <label class="form-label" style="color:#E89B23;"><i class="fas fa-exclamation-triangle" style="color:#E89B23;"></i> 보류 사유 <span class="text-danger">*</span></label>
+                <textarea name="pending_reason" id="ti_pending_reason" class="form-control" rows="3" 
+                    placeholder="보류 사유를 입력하세요..." style="border-color:#E89B23;resize:vertical;"></textarea>
             </div>
         </div>
         
         <!-- 팝업 하단 버튼 -->
-        <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#FAFAFA;border-radius:0 0 12px 12px;">
+        <div id="tiPopupFooter" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#FAFAFA;border-radius:0 0 12px 12px;">
             <button type="button" class="btn btn-outline" onclick="closePopup()"><i class="fas fa-times"></i> 취소</button>
             <button type="submit" class="btn btn-primary" id="tiSubmitBtn"><i class="fas fa-save"></i> 등록</button>
         </div>
@@ -283,8 +301,25 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 $companiesJson = json_encode($companies, JSON_UNESCAPED_UNICODE);
 $pageScript = <<<JS
 
+var isViewMode = false; // 보기 전용 모드 플래그
+
+// ===== 보류 사유 토글 =====
+function togglePendingReason() {
+    var status = document.querySelector('input[name="status"]:checked');
+    var wrap = document.getElementById('pendingReasonWrap');
+    var textarea = document.getElementById('ti_pending_reason');
+    if (status && status.value === 'pending') {
+        wrap.style.display = 'block';
+        textarea.required = true;
+    } else {
+        wrap.style.display = 'none';
+        textarea.required = false;
+    }
+}
+
 // ===== 팝업 열기/닫기 =====
 function openCreatePopup() {
+    isViewMode = false;
     document.getElementById('ti_invoice_id').value = '';
     document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-file-invoice" style="color:var(--accent);"></i> 세금계산서 발행 요청 등록';
     document.getElementById('tiSubmitBtn').innerHTML = '<i class="fas fa-save"></i> 등록';
@@ -301,13 +336,26 @@ function openCreatePopup() {
     
     document.getElementById('ti-total-display').textContent = '0';
     document.getElementById('ti-vat-display').textContent = '0';
+    document.getElementById('ti_pending_reason').value = '';
     
+    setFormEditable(true);
+    togglePendingReason();
     showPopup();
     initTiDatepicker();
     initMoneyInputs();
 }
 
 function openEditPopup(id) {
+    isViewMode = false;
+    loadInvoiceData(id, false);
+}
+
+function openViewPopup(id) {
+    isViewMode = true;
+    loadInvoiceData(id, true);
+}
+
+function loadInvoiceData(id, readOnly) {
     fetch('?page=taxinvoice&action=getDetail&id=' + id)
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -316,14 +364,24 @@ function openEditPopup(id) {
             var det = data.details;
             
             document.getElementById('ti_invoice_id').value = inv.id;
-            document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-edit" style="color:var(--accent);"></i> 세금계산서 요청 수정 (#' + inv.id + ')';
-            document.getElementById('tiSubmitBtn').innerHTML = '<i class="fas fa-save"></i> 수정 저장';
+            
+            if (readOnly) {
+                document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-eye" style="color:var(--accent);"></i> 세금계산서 요청 상세보기 (#' + inv.id + ')';
+            } else {
+                document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-edit" style="color:var(--accent);"></i> 세금계산서 요청 수정 (#' + inv.id + ')';
+                document.getElementById('tiSubmitBtn').innerHTML = '<i class="fas fa-save"></i> 수정 저장';
+            }
+            
             document.getElementById('ti_company_id').value = inv.company_id;
             document.getElementById('ti_project_name').value = inv.project_name;
             
             // 상태 라디오 설정
             var radios = document.querySelectorAll('input[name="status"]');
             radios.forEach(function(r) { r.checked = (r.value === inv.status); });
+            
+            // 보류 사유 복원
+            document.getElementById('ti_pending_reason').value = inv.pending_reason || '';
+            togglePendingReason();
             
             // 제품 라인 복원
             var lines = document.getElementById('ti-lines');
@@ -338,12 +396,42 @@ function openEditPopup(id) {
                     '<button type="button" class="btn-remove" onclick="removeTiLine(this)"><i class="fas fa-times"></i></button></div>';
             });
             
+            setFormEditable(!readOnly);
             showPopup();
             initTiDatepicker(inv.request_date);
             initMoneyInputs();
             calcTiTotal();
         })
         .catch(function(err) { alert('데이터 로드 실패: ' + err); });
+}
+
+// ===== 읽기 전용 모드 전환 =====
+function setFormEditable(editable) {
+    var form = document.getElementById('tiForm');
+    var fields = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
+    var footer = document.getElementById('tiPopupFooter');
+    var addLineBtn = document.getElementById('tiAddLineBtn');
+    var removeBtns = form.querySelectorAll('.btn-remove');
+    
+    fields.forEach(function(f) {
+        if (editable) {
+            f.removeAttribute('disabled');
+        } else {
+            f.setAttribute('disabled', 'disabled');
+        }
+    });
+    
+    // 제품 추가/삭제 버튼
+    if (addLineBtn) addLineBtn.style.display = editable ? '' : 'none';
+    removeBtns.forEach(function(b) { b.style.display = editable ? '' : 'none'; });
+    
+    // 하단 버튼 영역
+    if (editable) {
+        footer.innerHTML = '<button type="button" class="btn btn-outline" onclick="closePopup()"><i class="fas fa-times"></i> 취소</button>' +
+            '<button type="submit" class="btn btn-primary" id="tiSubmitBtn"><i class="fas fa-save"></i> 등록</button>';
+    } else {
+        footer.innerHTML = '<button type="button" class="btn btn-outline" onclick="closePopup()"><i class="fas fa-times"></i> 닫기</button>';
+    }
 }
 
 function showPopup() {
@@ -356,6 +444,7 @@ function closePopup() {
     document.getElementById('tiPopupOverlay').style.display = 'none';
     document.getElementById('tiPopup').style.display = 'none';
     document.body.style.overflow = '';
+    isViewMode = false;
 }
 
 // 오버레이 클릭 시 닫기
@@ -378,6 +467,7 @@ function initTiDatepicker(defaultVal) {
 
 // ===== 제품 라인 추가/삭제/계산 =====
 function addTiLine() {
+    if (isViewMode) return;
     var html = '<div class="ti-line-item">' +
         '<input type="text" name="ti_product_name[]" class="form-control" placeholder="제품명 입력" required>' +
         '<input type="number" name="ti_quantity[]" class="form-control" value="1" min="1" oninput="calcTiLine(this)">' +
@@ -389,6 +479,7 @@ function addTiLine() {
 }
 
 function removeTiLine(btn) {
+    if (isViewMode) return;
     var container = btn.closest('.line-items');
     if (container.querySelectorAll('.ti-line-item').length > 1) {
         btn.closest('.ti-line-item').remove();

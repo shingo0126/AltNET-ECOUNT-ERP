@@ -90,7 +90,7 @@
     </div>
 </div>
 
-<!-- 세금계산서 발행 요청 최근 5건 -->
+<!-- 세금계산서 발행 요청 최근 5건 (요청 건만 표시) -->
 <div class="card" style="margin-bottom:20px;">
     <div class="card-header">
         <h3><i class="fas fa-file-invoice" style="color:var(--accent)"></i> 세금계산서 발행 요청 (최근 5건)</h3>
@@ -98,14 +98,9 @@
     </div>
     <div class="card-body" style="padding:12px 20px;">
         <?php if (empty($recentTaxInvoices)): ?>
-            <div class="empty-state" style="padding:20px;"><i class="fas fa-inbox"></i><h4>등록된 발행 요청이 없습니다</h4></div>
+            <div class="empty-state" style="padding:20px;"><i class="fas fa-inbox"></i><h4>발행 요청 건이 없습니다</h4></div>
         <?php else: ?>
-        <?php
-        $tiStatusLabels = ['requested' => '요청', 'pending' => '보류', 'completed' => '완료'];
-        $tiStatusColors = ['requested' => '#2E7D4F', 'pending' => '#E89B23', 'completed' => '#0077B6'];
-        $tiStatusBg     = ['requested' => '#E8F5E9', 'pending' => '#FFF3E0', 'completed' => '#E0F2FE'];
-        $now = time();
-        ?>
+        <?php $now = time(); ?>
         <div class="table-responsive">
             <table class="data-table">
                 <thead>
@@ -130,8 +125,8 @@
                         <td class="money"><?= formatMoney($ti['total_amount']) ?>원</td>
                         <td style="text-align:center;">
                             <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;
-                                color:<?= $tiStatusColors[$ti['status']] ?>;background:<?= $tiStatusBg[$ti['status']] ?>;">
-                                <?= $tiStatusLabels[$ti['status']] ?>
+                                color:#2E7D4F;background:#E8F5E9;">
+                                요청
                             </span>
                         </td>
                     </tr>

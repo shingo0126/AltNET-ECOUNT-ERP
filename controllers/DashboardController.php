@@ -102,13 +102,13 @@ class DashboardController {
         $years = [];
         foreach ($yearSet as $y => $v) { $years[] = ['y' => $y]; }
         
-        // ===== 세금계산서 발행 요청 최근 5건 =====
+        // ===== 세금계산서 발행 요청 최근 5건 (요청 건만, 보류/완료 제외) =====
         $recentTaxInvoices = $db->fetchAll(
             "SELECT t.id, t.request_date, t.project_name, t.total_amount, t.status, t.created_at,
                     c.name as company_name
              FROM tax_invoices t
              LEFT JOIN companies c ON t.company_id=c.id
-             WHERE t.is_deleted=0
+             WHERE t.is_deleted=0 AND t.status='requested'
              ORDER BY t.created_at DESC
              LIMIT 5"
         );
