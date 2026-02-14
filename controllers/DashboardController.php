@@ -172,10 +172,16 @@ class DashboardController {
             "SELECT c.name, SUM(s.total_amount) as total FROM sales s JOIN companies c ON s.company_id=c.id 
              WHERE $companyWhere GROUP BY c.id, c.name ORDER BY total DESC", $companyParams);
         $topVendors = $db->fetchAll(
-            "SELECT v.name, SUM(p.total_amount) as total FROM purchases p JOIN vendors v ON p.vendor_id=v.id 
+            "SELECT v.name, SUM(pd.subtotal) as total 
+             FROM purchase_details pd
+             JOIN purchases p ON pd.purchase_id = p.id
+             JOIN vendors v ON COALESCE(pd.vendor_id, p.vendor_id) = v.id 
              WHERE $vendorWhere GROUP BY v.id, v.name ORDER BY total DESC LIMIT 20", $vendorParams);
         $allVendors = $db->fetchAll(
-            "SELECT v.name, SUM(p.total_amount) as total FROM purchases p JOIN vendors v ON p.vendor_id=v.id 
+            "SELECT v.name, SUM(pd.subtotal) as total 
+             FROM purchase_details pd
+             JOIN purchases p ON pd.purchase_id = p.id
+             JOIN vendors v ON COALESCE(pd.vendor_id, p.vendor_id) = v.id 
              WHERE $vendorWhere GROUP BY v.id, v.name ORDER BY total DESC", $vendorParams);
         
         return compact('topCompanies', 'allCompanies', 'topVendors', 'allVendors', 'periodLabel');

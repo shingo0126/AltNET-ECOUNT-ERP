@@ -77,15 +77,23 @@ class SalesController {
             $purchSumParams[] = "%{$search}%";
         }
         $purchSumTotal = $db->fetch(
-            "SELECT COUNT(*) as cnt FROM (SELECT v.id FROM purchases p LEFT JOIN vendors v ON p.vendor_id=v.id WHERE $purchSumWhere GROUP BY v.id) sub",
+            "SELECT COUNT(*) as cnt FROM (
+                SELECT COALESCE(pd.vendor_id, p.vendor_id) as vid
+                FROM purchase_details pd
+                JOIN purchases p ON pd.purchase_id = p.id
+                LEFT JOIN vendors v ON COALESCE(pd.vendor_id, p.vendor_id) = v.id
+                WHERE $purchSumWhere
+                GROUP BY vid
+            ) sub",
             $purchSumParams
         )['cnt'];
         $purchSumPag = paginate($purchSumTotal, $perPage, $purchSumPage);
         $purchSummary = $db->fetchAll(
-            "SELECT v.name as vendor_name, COUNT(p.id) as purchase_count,
-                    SUM(p.total_amount) as total_purchases, SUM(p.vat_amount) as total_vat
-             FROM purchases p
-             LEFT JOIN vendors v ON p.vendor_id=v.id
+            "SELECT v.name as vendor_name, COUNT(DISTINCT p.id) as purchase_count,
+                    SUM(pd.subtotal) as total_purchases, ROUND(SUM(pd.subtotal) * 0.1) as total_vat
+             FROM purchase_details pd
+             JOIN purchases p ON pd.purchase_id = p.id
+             LEFT JOIN vendors v ON COALESCE(pd.vendor_id, p.vendor_id) = v.id
              WHERE $purchSumWhere
              GROUP BY v.id, v.name
              ORDER BY total_purchases DESC
@@ -423,10 +431,11 @@ class SalesController {
         $month = getParam('month', date('m'));
         
         $data = $db->fetchAll(
-            "SELECT v.name as vendor_name, COUNT(p.id) as purchase_count,
-                    SUM(p.total_amount) as total_purchases, SUM(p.vat_amount) as total_vat
-             FROM purchases p
-             LEFT JOIN vendors v ON p.vendor_id=v.id
+            "SELECT v.name as vendor_name, COUNT(DISTINCT p.id) as purchase_count,
+                    SUM(pd.subtotal) as total_purchases, ROUND(SUM(pd.subtotal) * 0.1) as total_vat
+             FROM purchase_details pd
+             JOIN purchases p ON pd.purchase_id = p.id
+             LEFT JOIN vendors v ON COALESCE(pd.vendor_id, p.vendor_id) = v.id
              WHERE p.is_deleted=0 AND YEAR(p.purchase_date)=? AND MONTH(p.purchase_date)=?
              GROUP BY v.id, v.name
              ORDER BY total_purchases DESC",
