@@ -175,10 +175,10 @@ a:hover { color: #67e8f9; }
 
 .sidebar-header .brand-text {
     display: inline-block;
-    width: 216px;
+    width: 270px;
     max-width: 100%;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: 1.5px;
     margin-bottom: 6px;
     background: linear-gradient(135deg, #f8fafc, var(--cyan-accent));
