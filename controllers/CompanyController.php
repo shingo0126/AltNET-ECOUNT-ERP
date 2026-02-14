@@ -4,6 +4,8 @@ class CompanyController {
     public function index() {
         $db = Database::getInstance();
         $search = getParam('search', '');
+        $page = max(1, (int)getParam('p', 1));
+        $perPage = 25;
         
         $where = "is_deleted=0";
         $params = [];
@@ -13,7 +15,11 @@ class CompanyController {
         }
         
         $totalCount = $db->count('companies', $where, $params);
-        $companies = $db->fetchAll("SELECT * FROM companies WHERE $where ORDER BY name", $params);
+        $pag = paginate($totalCount, $perPage, $page);
+        $companies = $db->fetchAll(
+            "SELECT * FROM companies WHERE $where ORDER BY name LIMIT {$pag['per_page']} OFFSET {$pag['offset']}",
+            $params
+        );
         
         $pageTitle = '매출 업체 관리';
         ob_start();

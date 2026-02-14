@@ -11,7 +11,7 @@ class TaxInvoiceController {
         $reqPage = max(1, (int)getParam('rp', 1));
         // 발행 완료 탭 페이지
         $compPage = max(1, (int)getParam('cp', 1));
-        $perPage = 15;
+        $perPage = 25;
         $isAdmin = Auth::hasRole(['admin']);
         
         // === 집계 카운트 ===

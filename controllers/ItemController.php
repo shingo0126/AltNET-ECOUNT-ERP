@@ -3,8 +3,14 @@ class ItemController {
     
     public function index() {
         $db = Database::getInstance();
+        $page = max(1, (int)getParam('p', 1));
+        $perPage = 25;
+        
         $totalCount = $db->count('sale_items', 'is_deleted=0');
-        $items = $db->fetchAll("SELECT * FROM sale_items WHERE is_deleted=0 ORDER BY sort_order");
+        $pag = paginate($totalCount, $perPage, $page);
+        $items = $db->fetchAll(
+            "SELECT * FROM sale_items WHERE is_deleted=0 ORDER BY sort_order LIMIT {$pag['per_page']} OFFSET {$pag['offset']}"
+        );
         
         // Item analysis - quantity stats (SUM of sale_details.quantity per sale_item)
         $itemStats = $db->fetchAll(

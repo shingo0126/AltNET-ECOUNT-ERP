@@ -4,6 +4,8 @@ class VendorController {
     public function index() {
         $db = Database::getInstance();
         $search = getParam('search', '');
+        $page = max(1, (int)getParam('p', 1));
+        $perPage = 25;
         
         $where = "is_deleted=0";
         $params = [];
@@ -13,7 +15,11 @@ class VendorController {
         }
         
         $totalCount = $db->count('vendors', $where, $params);
-        $vendors = $db->fetchAll("SELECT * FROM vendors WHERE $where ORDER BY name", $params);
+        $pag = paginate($totalCount, $perPage, $page);
+        $vendors = $db->fetchAll(
+            "SELECT * FROM vendors WHERE $where ORDER BY name LIMIT {$pag['per_page']} OFFSET {$pag['offset']}",
+            $params
+        );
         
         $pageTitle = '매입 업체 관리';
         ob_start();

@@ -9,17 +9,10 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <div class="alert alert-<?= e($flashT) ?>"><i class="fas fa-<?= $flashT === 'success' ? 'check-circle' : 'exclamation-circle' ?>"></i> <?= e($flashMsg) ?></div>
 <?php endif; ?>
 
-<div class="card">
-    <div class="card-header">
-        <h3><i class="fas fa-file-invoice-dollar" style="color:var(--cyan-accent)"></i> 매출/매입 내역</h3>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="?page=sales&action=create" class="btn btn-primary"><i class="fas fa-plus"></i> 매출등록</a>
-            <a href="?page=sales&action=export&year=<?= e($year) ?>&month=<?= e($month) ?>" class="btn btn-success"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
-        </div>
-    </div>
-    <div class="card-body">
-        <!-- Filters -->
-        <form method="GET" class="filter-bar">
+<!-- ===== 공통 필터 ===== -->
+<div class="card mb-2">
+    <div class="card-body" style="padding:12px 20px;">
+        <form method="GET" class="filter-bar" style="margin:0;">
             <input type="hidden" name="page" value="sales">
             <div class="form-group">
                 <select name="year" class="form-control">
@@ -40,8 +33,19 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
             </div>
             <button type="submit" class="btn btn-outline"><i class="fas fa-search"></i> 검색</button>
         </form>
-        
-        <!-- Table -->
+    </div>
+</div>
+
+<!-- ===== 1. 매출/매입 내역 리스트 ===== -->
+<div class="card mb-2">
+    <div class="card-header">
+        <h3><i class="fas fa-file-invoice-dollar" style="color:var(--cyan-accent)"></i> 매출/매입 내역</h3>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="?page=sales&action=create" class="btn btn-primary"><i class="fas fa-plus"></i> 매출등록</a>
+            <a href="?page=sales&action=export&year=<?= e($year) ?>&month=<?= e($month) ?>" class="btn btn-success"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
+        </div>
+    </div>
+    <div class="card-body">
         <div class="table-responsive">
             <table class="data-table">
                 <thead>
@@ -85,20 +89,131 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
             </table>
         </div>
         
-        <!-- Pagination -->
+        <!-- 매출/매입 내역 Pagination -->
         <?php if ($pag['total_pages'] > 1): ?>
         <div class="pagination">
             <?php if ($pag['current'] > 1): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $pag['current']-1 ?>"><i class="fas fa-chevron-left"></i></a>
+            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $pag['current']-1 ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-left"></i></a>
             <?php endif; ?>
-            
             <?php for ($i = max(1, $pag['current']-3); $i <= min($pag['total_pages'], $pag['current']+3); $i++): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $i ?>" 
+            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $i ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPage ?>" 
                class="<?= $i == $pag['current'] ? 'active' : '' ?>"><?= $i ?></a>
             <?php endfor; ?>
-            
             <?php if ($pag['current'] < $pag['total_pages']): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $pag['current']+1 ?>"><i class="fas fa-chevron-right"></i></a>
+            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $pag['current']+1 ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-right"></i></a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- ===== 2. 매출 집계 리스트 (업체별) ===== -->
+<div class="card mb-2">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-bar" style="color:var(--emerald)"></i> 매출 집계 <span class="badge badge-user" style="font-size:11px;margin-left:8px;"><?= e($year) ?>년 <?= e($month) ?>월</span></h3>
+        <a href="?page=sales&action=exportSaleSummary&year=<?= e($year) ?>&month=<?= e($month) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width:50px;">순위</th>
+                        <th>업체명</th>
+                        <th class="text-center">건수</th>
+                        <th class="text-right">매출합계</th>
+                        <th class="text-right">부가세합계</th>
+                        <th class="text-right">매입합계</th>
+                        <th class="text-right">영업이익</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($saleSummary)): ?>
+                    <tr><td colspan="7" class="text-center" style="padding:40px;color:var(--text-muted);">매출 집계 데이터가 없습니다.</td></tr>
+                    <?php else: ?>
+                    <?php foreach ($saleSummary as $idx => $ss): ?>
+                    <?php $sProfit = $ss['total_sales'] - $ss['total_purchases']; ?>
+                    <tr>
+                        <td><strong><?= $saleSumPag['offset'] + $idx + 1 ?></strong></td>
+                        <td><strong><?= e($ss['company_name']) ?></strong></td>
+                        <td class="text-center"><?= number_format($ss['sale_count']) ?></td>
+                        <td class="money"><?= formatMoney($ss['total_sales']) ?></td>
+                        <td class="money"><?= formatMoney($ss['total_vat']) ?></td>
+                        <td class="money"><?= formatMoney($ss['total_purchases']) ?></td>
+                        <td class="money <?= $sProfit >= 0 ? 'text-success' : 'text-danger' ?>"><?= formatMoney($sProfit) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 매출 집계 Pagination -->
+        <?php if ($saleSumPag['total_pages'] > 1): ?>
+        <div class="pagination">
+            <?php if ($saleSumPag['current'] > 1): ?>
+            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $saleSumPag['current']-1 ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-left"></i></a>
+            <?php endif; ?>
+            <?php for ($i = max(1, $saleSumPag['current']-3); $i <= min($saleSumPag['total_pages'], $saleSumPag['current']+3); $i++): ?>
+            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $i ?>&pp=<?= $purchSumPage ?>" 
+               class="<?= $i == $saleSumPag['current'] ? 'active' : '' ?>"><?= $i ?></a>
+            <?php endfor; ?>
+            <?php if ($saleSumPag['current'] < $saleSumPag['total_pages']): ?>
+            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $saleSumPag['current']+1 ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-right"></i></a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- ===== 3. 매입 집계 리스트 (업체별) ===== -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-pie" style="color:var(--amber-glow)"></i> 매입 집계 <span class="badge badge-user" style="font-size:11px;margin-left:8px;"><?= e($year) ?>년 <?= e($month) ?>월</span></h3>
+        <a href="?page=sales&action=exportPurchSummary&year=<?= e($year) ?>&month=<?= e($month) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width:50px;">순위</th>
+                        <th>업체명</th>
+                        <th class="text-center">건수</th>
+                        <th class="text-right">매입합계</th>
+                        <th class="text-right">부가세합계</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($purchSummary)): ?>
+                    <tr><td colspan="5" class="text-center" style="padding:40px;color:var(--text-muted);">매입 집계 데이터가 없습니다.</td></tr>
+                    <?php else: ?>
+                    <?php foreach ($purchSummary as $idx => $ps): ?>
+                    <tr>
+                        <td><strong><?= $purchSumPag['offset'] + $idx + 1 ?></strong></td>
+                        <td><strong><?= e($ps['vendor_name']) ?></strong></td>
+                        <td class="text-center"><?= number_format($ps['purchase_count']) ?></td>
+                        <td class="money"><?= formatMoney($ps['total_purchases']) ?></td>
+                        <td class="money"><?= formatMoney($ps['total_vat']) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 매입 집계 Pagination -->
+        <?php if ($purchSumPag['total_pages'] > 1): ?>
+        <div class="pagination">
+            <?php if ($purchSumPag['current'] > 1): ?>
+            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPag['current']-1 ?>"><i class="fas fa-chevron-left"></i></a>
+            <?php endif; ?>
+            <?php for ($i = max(1, $purchSumPag['current']-3); $i <= min($purchSumPag['total_pages'], $purchSumPag['current']+3); $i++): ?>
+            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $saleSumPage ?>&pp=<?= $i ?>" 
+               class="<?= $i == $purchSumPag['current'] ? 'active' : '' ?>"><?= $i ?></a>
+            <?php endfor; ?>
+            <?php if ($purchSumPag['current'] < $purchSumPag['total_pages']): ?>
+            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPag['current']+1 ?>"><i class="fas fa-chevron-right"></i></a>
             <?php endif; ?>
         </div>
         <?php endif; ?>

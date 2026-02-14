@@ -7,7 +7,7 @@ class SalesController {
         $month = getParam('month', date('m'));
         $search = getParam('search', '');
         $page = max(1, (int)getParam('p', 1));
-        $perPage = 30;
+        $perPage = 20;
         
         $where = "s.is_deleted=0 AND YEAR(s.sale_date)=? AND MONTH(s.sale_date)=?";
         $params = [$year, $month];
@@ -36,6 +36,59 @@ class SalesController {
         );
         
         $years = $db->fetchAll("SELECT DISTINCT YEAR(sale_date) as y FROM sales WHERE is_deleted=0 UNION SELECT YEAR(CURDATE()) ORDER BY y DESC");
+        
+        // === 매출 집계 (업체별 합산) ===
+        $saleSumPage = max(1, (int)getParam('sp', 1));
+        $saleSumWhere = "s.is_deleted=0 AND YEAR(s.sale_date)=? AND MONTH(s.sale_date)=?";
+        $saleSumParams = [$year, $month];
+        if ($search) {
+            $saleSumWhere .= " AND (c.name LIKE ? OR s.sale_number LIKE ?)";
+            $saleSumParams[] = "%{$search}%";
+            $saleSumParams[] = "%{$search}%";
+        }
+        $saleSumTotal = $db->fetch(
+            "SELECT COUNT(*) as cnt FROM (SELECT c.id FROM sales s LEFT JOIN companies c ON s.company_id=c.id WHERE $saleSumWhere GROUP BY c.id) sub",
+            $saleSumParams
+        )['cnt'];
+        $saleSumPag = paginate($saleSumTotal, $perPage, $saleSumPage);
+        $saleSummary = $db->fetchAll(
+            "SELECT c.name as company_name, COUNT(s.id) as sale_count,
+                    SUM(s.total_amount) as total_sales, SUM(s.vat_amount) as total_vat,
+                    COALESCE(SUM((SELECT SUM(p2.total_amount) FROM purchases p2 WHERE p2.sale_id=s.id AND p2.is_deleted=0)),0) as total_purchases
+             FROM sales s
+             LEFT JOIN companies c ON s.company_id=c.id
+             WHERE $saleSumWhere
+             GROUP BY c.id, c.name
+             ORDER BY total_sales DESC
+             LIMIT {$saleSumPag['per_page']} OFFSET {$saleSumPag['offset']}",
+            $saleSumParams
+        );
+        
+        // === 매입 집계 (업체별 합산) ===
+        $purchSumPage = max(1, (int)getParam('pp', 1));
+        $purchSumWhere = "p.is_deleted=0 AND YEAR(p.purchase_date)=? AND MONTH(p.purchase_date)=?";
+        $purchSumParams = [$year, $month];
+        if ($search) {
+            $purchSumWhere .= " AND (v.name LIKE ? OR p.purchase_number LIKE ?)";
+            $purchSumParams[] = "%{$search}%";
+            $purchSumParams[] = "%{$search}%";
+        }
+        $purchSumTotal = $db->fetch(
+            "SELECT COUNT(*) as cnt FROM (SELECT v.id FROM purchases p LEFT JOIN vendors v ON p.vendor_id=v.id WHERE $purchSumWhere GROUP BY v.id) sub",
+            $purchSumParams
+        )['cnt'];
+        $purchSumPag = paginate($purchSumTotal, $perPage, $purchSumPage);
+        $purchSummary = $db->fetchAll(
+            "SELECT v.name as vendor_name, COUNT(p.id) as purchase_count,
+                    SUM(p.total_amount) as total_purchases, SUM(p.vat_amount) as total_vat
+             FROM purchases p
+             LEFT JOIN vendors v ON p.vendor_id=v.id
+             WHERE $purchSumWhere
+             GROUP BY v.id, v.name
+             ORDER BY total_purchases DESC
+             LIMIT {$purchSumPag['per_page']} OFFSET {$purchSumPag['offset']}",
+            $purchSumParams
+        );
         
         $pageTitle = '매출/매입 관리';
         ob_start();
@@ -293,5 +346,74 @@ class SalesController {
         }
         
         csvExport("매출내역_{$year}_{$month}.csv", $headers, $rows);
+    }
+    
+    /**
+     * 매출 집계 CSV 다운로드 (업체별)
+     */
+    public function exportSaleSummary() {
+        $db = Database::getInstance();
+        $year = getParam('year', date('Y'));
+        $month = getParam('month', date('m'));
+        
+        $data = $db->fetchAll(
+            "SELECT c.name as company_name, COUNT(s.id) as sale_count,
+                    SUM(s.total_amount) as total_sales, SUM(s.vat_amount) as total_vat,
+                    COALESCE(SUM((SELECT SUM(p2.total_amount) FROM purchases p2 WHERE p2.sale_id=s.id AND p2.is_deleted=0)),0) as total_purchases
+             FROM sales s
+             LEFT JOIN companies c ON s.company_id=c.id
+             WHERE s.is_deleted=0 AND YEAR(s.sale_date)=? AND MONTH(s.sale_date)=?
+             GROUP BY c.id, c.name
+             ORDER BY total_sales DESC",
+            [$year, $month]
+        );
+        
+        AuditLog::log('EXPORT', 'sales', null, null, null, "매출집계 CSV 다운로드 ({$year}-{$month})");
+        
+        $headers = ['순위', '업체명', '건수', '매출합계', '부가세합계', '매입합계', '영업이익'];
+        $rows = [];
+        foreach ($data as $i => $r) {
+            $profit = $r['total_sales'] - $r['total_purchases'];
+            $rows[] = [
+                $i + 1, $r['company_name'], $r['sale_count'],
+                number_format($r['total_sales']), number_format($r['total_vat']),
+                number_format($r['total_purchases']), number_format($profit)
+            ];
+        }
+        
+        csvExport("매출집계_{$year}_{$month}.csv", $headers, $rows);
+    }
+    
+    /**
+     * 매입 집계 CSV 다운로드 (업체별)
+     */
+    public function exportPurchSummary() {
+        $db = Database::getInstance();
+        $year = getParam('year', date('Y'));
+        $month = getParam('month', date('m'));
+        
+        $data = $db->fetchAll(
+            "SELECT v.name as vendor_name, COUNT(p.id) as purchase_count,
+                    SUM(p.total_amount) as total_purchases, SUM(p.vat_amount) as total_vat
+             FROM purchases p
+             LEFT JOIN vendors v ON p.vendor_id=v.id
+             WHERE p.is_deleted=0 AND YEAR(p.purchase_date)=? AND MONTH(p.purchase_date)=?
+             GROUP BY v.id, v.name
+             ORDER BY total_purchases DESC",
+            [$year, $month]
+        );
+        
+        AuditLog::log('EXPORT', 'purchases', null, null, null, "매입집계 CSV 다운로드 ({$year}-{$month})");
+        
+        $headers = ['순위', '업체명', '건수', '매입합계', '부가세합계'];
+        $rows = [];
+        foreach ($data as $i => $r) {
+            $rows[] = [
+                $i + 1, $r['vendor_name'], $r['purchase_count'],
+                number_format($r['total_purchases']), number_format($r['total_vat'])
+            ];
+        }
+        
+        csvExport("매입집계_{$year}_{$month}.csv", $headers, $rows);
     }
 }

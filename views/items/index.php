@@ -57,6 +57,21 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination -->
+        <?php if ($pag['total_pages'] > 1): ?>
+        <div class="pagination">
+            <?php if ($pag['current'] > 1): ?>
+            <a href="?page=items&p=<?= $pag['current']-1 ?>"><i class="fas fa-chevron-left"></i></a>
+            <?php endif; ?>
+            <?php for ($i = max(1, $pag['current']-3); $i <= min($pag['total_pages'], $pag['current']+3); $i++): ?>
+            <a href="?page=items&p=<?= $i ?>" class="<?= $i == $pag['current'] ? 'active' : '' ?>"><?= $i ?></a>
+            <?php endfor; ?>
+            <?php if ($pag['current'] < $pag['total_pages']): ?>
+            <a href="?page=items&p=<?= $pag['current']+1 ?>"><i class="fas fa-chevron-right"></i></a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 

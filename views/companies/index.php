@@ -44,7 +44,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                     <?php else: ?>
                     <?php foreach ($companies as $i => $c): ?>
                     <tr>
-                        <td><?= $i + 1 ?></td>
+                        <td><?= $pag['offset'] + $i + 1 ?></td>
                         <td><strong><?= e($c['name']) ?></strong></td>
                         <td><?= e($c['contact_person']) ?></td>
                         <td><?= e($c['phone']) ?></td>
@@ -62,6 +62,21 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination -->
+        <?php if ($pag['total_pages'] > 1): ?>
+        <div class="pagination">
+            <?php if ($pag['current'] > 1): ?>
+            <a href="?page=companies&search=<?= urlencode($search) ?>&p=<?= $pag['current']-1 ?>"><i class="fas fa-chevron-left"></i></a>
+            <?php endif; ?>
+            <?php for ($i = max(1, $pag['current']-3); $i <= min($pag['total_pages'], $pag['current']+3); $i++): ?>
+            <a href="?page=companies&search=<?= urlencode($search) ?>&p=<?= $i ?>" class="<?= $i == $pag['current'] ? 'active' : '' ?>"><?= $i ?></a>
+            <?php endfor; ?>
+            <?php if ($pag['current'] < $pag['total_pages']): ?>
+            <a href="?page=companies&search=<?= urlencode($search) ?>&p=<?= $pag['current']+1 ?>"><i class="fas fa-chevron-right"></i></a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
