@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>세금계산서 발행요청 - AltNET ECOUNT ERP (Glassmorphism 2.0)</title>
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== Glassmorphism 2.0 — Bold Blue Tax Invoice List ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg-deep:#070e1a;
+  --blue-primary:#2563eb;
+  --blue-hover:#3b82f6;
+  --cyan-accent:#22d3ee;
+  --indigo:#6366f1;
+  --amber-glow:#f59e0b;
+  --emerald:#10b981;
+  --rose:#f43f5e;
+  --text-primary:#f1f5f9;
+  --text-secondary:#94a3b8;
+  --text-muted:#64748b;
+  --sidebar-w:260px;
+  --topbar-h:60px;
+
+  --glass-bg:rgba(255,255,255,0.04);
+  --glass-bg-hover:rgba(255,255,255,0.07);
+  --glass-border:rgba(255,255,255,0.08);
+  --glass-border-hover:rgba(255,255,255,0.15);
+  --glass-blur:blur(20px) saturate(1.4) brightness(1.05);
+  --glass-blur-heavy:blur(28px) saturate(1.6) brightness(1.1);
+  --glass-shadow:0 8px 32px rgba(0,0,0,0.35),0 2px 8px rgba(37,99,235,0.12);
+  --glass-inner-glow:inset 0 1px 0 rgba(255,255,255,0.08),inset 0 0 20px rgba(34,211,238,0.02);
+  --gradient-border:linear-gradient(135deg,rgba(37,99,235,0.4),rgba(34,211,238,0.2),rgba(99,102,241,0.3));
+  --noise-texture:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+body{
+  font-family:'Pretendard',system-ui,sans-serif;
+  background:
+    var(--noise-texture),
+    radial-gradient(ellipse 80% 50% at 70% 20%,rgba(37,99,235,0.18),transparent),
+    radial-gradient(ellipse 60% 40% at 20% 80%,rgba(34,211,238,0.1),transparent),
+    radial-gradient(ellipse 50% 50% at 50% 50%,rgba(99,102,241,0.08),transparent),
+    var(--bg-deep);
+  background-attachment:fixed;
+  color:var(--text-primary);
+  min-height:100vh;
+}
+
+/* ── Sidebar (same as dashboard) ── */
+.sidebar{
+  position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);z-index:100;
+  display:flex;flex-direction:column;
+  background:rgba(10,22,40,0.82);
+  -webkit-backdrop-filter:blur(24px) saturate(1.5);
+  backdrop-filter:blur(24px) saturate(1.5);
+  border-right:1px solid rgba(255,255,255,0.06);
+  box-shadow:4px 0 24px rgba(0,0,0,0.3);
+}
+.sidebar::after{content:'';position:absolute;inset:0;background:var(--noise-texture);opacity:0.4;pointer-events:none}
+.sidebar-header{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,0.06);position:relative;z-index:1}
+.sidebar-brand{display:flex;align-items:center;gap:12px}
+.sidebar-brand i{font-size:1.6rem;color:var(--cyan-accent);filter:drop-shadow(0 0 8px rgba(34,211,238,0.5))}
+.sidebar-brand span{font-size:1.1rem;font-weight:800;background:linear-gradient(135deg,#f8fafc,var(--cyan-accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sidebar-brand small{font-size:0.65rem;color:var(--text-muted);display:block;font-weight:400;-webkit-text-fill-color:var(--text-muted)}
+.nav{flex:1;padding:16px 12px;overflow-y:auto;position:relative;z-index:1}
+.nav-label{font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;padding:12px 12px 6px}
+.nav a{display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:10px;color:var(--text-secondary);text-decoration:none;font-size:0.88rem;font-weight:500;transition:all 0.25s;margin-bottom:2px}
+.nav a:hover{color:var(--text-primary);background:var(--glass-bg-hover)}
+.nav a.active{color:var(--cyan-accent);background:linear-gradient(90deg,rgba(37,99,235,0.15),rgba(34,211,238,0.08));border-left:3px solid var(--cyan-accent)}
+.nav a i{width:20px;text-align:center;font-size:0.95rem}
+.sidebar-user{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;position:relative;z-index:1}
+.user-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--blue-primary),var(--indigo));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem}
+.user-info{flex:1}
+.user-info .name{font-size:0.85rem;font-weight:600;color:var(--text-primary)}
+.user-info .role{font-size:0.7rem;color:var(--cyan-accent)}
+
+/* ── Topbar ── */
+.topbar{
+  position:fixed;top:0;left:var(--sidebar-w);right:0;height:var(--topbar-h);z-index:90;
+  display:flex;align-items:center;justify-content:space-between;padding:0 28px;
+  background:rgba(255,255,255,0.03);
+  -webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3);
+  border-bottom:1px solid rgba(255,255,255,0.06);box-shadow:0 2px 12px rgba(0,0,0,0.2);
+}
+.topbar::after{content:'';position:absolute;inset:0;background:var(--noise-texture);opacity:0.3;pointer-events:none}
+.topbar-title{font-size:1rem;font-weight:700;position:relative;z-index:1}
+
+/* ── Main Content ── */
+.main{
+  margin-left:var(--sidebar-w);
+  padding:calc(var(--topbar-h) + 24px) 28px 40px;
+}
+
+/* ── Page Header ── */
+.page-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:24px;
+}
+.page-header h2{
+  font-size:1.3rem;font-weight:800;
+  display:flex;align-items:center;gap:10px;
+}
+.page-header h2 i{color:var(--cyan-accent)}
+
+/* ── 2.0: Buttons ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 20px;border-radius:10px;border:none;
+  font-size:0.85rem;font-weight:600;font-family:inherit;
+  cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;
+}
+.btn::before{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+  transition:left 0.5s;
+}
+.btn:hover::before{left:100%}
+.btn-primary{
+  background:linear-gradient(135deg,var(--blue-primary),var(--indigo));
+  color:#fff;
+  box-shadow:0 4px 15px rgba(37,99,235,0.35);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(37,99,235,0.45)}
+.btn-success{
+  background:linear-gradient(135deg,var(--emerald),#059669);
+  color:#fff;
+  box-shadow:0 4px 15px rgba(16,185,129,0.3);
+}
+.btn-success:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(16,185,129,0.4)}
+.btn-danger{
+  background:linear-gradient(135deg,var(--rose),#dc2626);
+  color:#fff;
+  box-shadow:0 4px 15px rgba(244,63,94,0.3);
+}
+.btn-danger:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(244,63,94,0.4)}
+.btn-outline{
+  background:var(--glass-bg);color:var(--text-secondary);
+  border:1px solid var(--glass-border);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+.btn-outline:hover{
+  background:var(--glass-bg-hover);color:var(--text-primary);
+  border-color:var(--glass-border-hover);
+}
+.btn-sm{padding:6px 14px;font-size:0.78rem;border-radius:8px}
+
+/* ── Status Summary Cards ── */
+.status-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;
+}
+.status-card{
+  position:relative;border-radius:14px;padding:18px 20px;
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  box-shadow:var(--glass-shadow),var(--glass-inner-glow);
+  display:flex;align-items:center;gap:16px;
+  transition:all 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+.status-card::after{content:'';position:absolute;inset:0;border-radius:14px;background:var(--noise-texture);opacity:0.4;pointer-events:none}
+.status-card:hover{transform:translateY(-3px);box-shadow:var(--glass-shadow),0 12px 40px rgba(37,99,235,0.12)}
+.status-icon{
+  width:46px;height:46px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;position:relative;z-index:1;
+}
+.status-icon.req{background:rgba(37,99,235,0.15);color:var(--blue-hover)}
+.status-icon.pend{background:rgba(245,158,11,0.15);color:var(--amber-glow)}
+.status-icon.done{background:rgba(16,185,129,0.15);color:var(--emerald)}
+.status-text{position:relative;z-index:1}
+.status-text .count{font-size:1.6rem;font-weight:800;font-family:'Roboto Mono',monospace;
+  background:linear-gradient(135deg,var(--text-primary),var(--cyan-accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.status-text .label{font-size:0.78rem;color:var(--text-muted)}
+
+/* ── 2.0: Glass Card ── */
+.card{
+  position:relative;border-radius:16px;overflow:hidden;
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  box-shadow:var(--glass-shadow),var(--glass-inner-glow);
+  margin-bottom:24px;
+}
+.card::after{content:'';position:absolute;inset:0;border-radius:16px;background:var(--noise-texture);opacity:0.4;pointer-events:none}
+.card-header{
+  padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;z-index:1;
+}
+.card-header h3{font-size:0.95rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-header h3 i{color:var(--cyan-accent)}
+.card-body{padding:0;position:relative;z-index:1}
+
+/* ── Data Table ── */
+.data-table{width:100%;border-collapse:collapse}
+.data-table thead th{
+  text-align:left;font-size:0.73rem;font-weight:700;
+  color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;
+  padding:12px 16px;background:rgba(255,255,255,0.02);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.data-table tbody td{
+  padding:12px 16px;font-size:0.84rem;color:var(--text-secondary);
+  border-bottom:1px solid rgba(255,255,255,0.04);transition:all 0.2s;
+}
+.data-table tbody tr{transition:background 0.2s;cursor:pointer}
+.data-table tbody tr:hover{background:rgba(37,99,235,0.06)}
+.data-table tbody tr:hover td{color:var(--text-primary)}
+.amount{font-family:'Roboto Mono',monospace;text-align:right}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.badge-req{background:rgba(37,99,235,0.15);color:var(--blue-hover);border:1px solid rgba(37,99,235,0.25)}
+.badge-pend{background:rgba(245,158,11,0.12);color:var(--amber-glow);border:1px solid rgba(245,158,11,0.2)}
+.badge-done{background:rgba(16,185,129,0.12);color:var(--emerald);border:1px solid rgba(16,185,129,0.2)}
+
+/* ── Pagination ── */
+.pagination{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:16px 24px;position:relative;z-index:1;
+}
+.page-btn{
+  width:34px;height:34px;border-radius:8px;border:none;
+  font-size:0.8rem;font-weight:600;font-family:inherit;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.25s;
+  background:var(--glass-bg);color:var(--text-muted);
+  border:1px solid var(--glass-border);
+}
+.page-btn:hover{background:var(--glass-bg-hover);color:var(--text-primary);border-color:var(--glass-border-hover)}
+.page-btn.active{
+  background:linear-gradient(135deg,var(--blue-primary),var(--indigo));
+  color:#fff;border-color:transparent;
+  box-shadow:0 4px 12px rgba(37,99,235,0.3);
+}
+
+/* ── 2.0: Modal / Popup ── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:1000;
+  display:none;align-items:center;justify-content:center;
+  /* 2.0: Blurred overlay */
+  background:rgba(7,14,26,0.6);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  padding:20px;
+}
+.modal-overlay.show{display:flex}
+
+.modal-box{
+  position:relative;
+  width:100%;max-width:640px;
+  max-height:85vh;overflow-y:auto;
+  border-radius:20px;
+  /* 2.0: Heavy glass */
+  background:rgba(15,23,42,0.85);
+  -webkit-backdrop-filter:var(--glass-blur-heavy);
+  backdrop-filter:var(--glass-blur-heavy);
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:0 24px 80px rgba(0,0,0,0.5),0 4px 20px rgba(37,99,235,0.15),var(--glass-inner-glow);
+  animation:modalIn 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+/* 2.0: Gradient border */
+.modal-box::before{
+  content:'';position:absolute;inset:-1px;border-radius:21px;padding:1px;
+  background:var(--gradient-border);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:1;
+}
+/* 2.0: Noise overlay */
+.modal-box::after{
+  content:'';position:absolute;inset:0;border-radius:20px;
+  background:var(--noise-texture);opacity:0.5;pointer-events:none;
+}
+/* 2.0: Top accent line */
+.modal-accent{
+  position:absolute;top:0;left:10%;right:10%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan-accent),var(--blue-primary),transparent);
+  border-radius:0 0 2px 2px;z-index:2;
+}
+
+@keyframes modalIn{
+  from{opacity:0;transform:translateY(20px) scale(0.96)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+.modal-header{
+  padding:24px 28px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;z-index:2;
+}
+.modal-header h3{font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.modal-header h3 i{color:var(--cyan-accent)}
+.modal-close{
+  width:32px;height:32px;border-radius:8px;border:none;
+  background:var(--glass-bg);color:var(--text-muted);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.25s;font-size:0.85rem;
+}
+.modal-close:hover{background:rgba(244,63,94,0.15);color:var(--rose)}
+.modal-body{padding:24px 28px;position:relative;z-index:2}
+.modal-footer{
+  padding:16px 28px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  display:flex;justify-content:flex-end;gap:10px;
+  position:relative;z-index:2;
+}
+
+/* ── Form Controls ── */
+.form-group{margin-bottom:18px}
+.form-group label{
+  display:block;font-size:0.78rem;font-weight:600;color:var(--text-secondary);
+  margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;
+}
+.form-control{
+  width:100%;padding:10px 14px;
+  border:1px solid var(--glass-border);border-radius:10px;
+  font-size:0.88rem;font-family:inherit;color:var(--text-primary);
+  outline:none;transition:all 0.3s;
+  background:rgba(255,255,255,0.03);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.form-control::placeholder{color:var(--text-muted)}
+.form-control:focus{
+  border-color:var(--cyan-accent);
+  box-shadow:0 0 0 3px rgba(34,211,238,0.15),0 0 16px rgba(37,99,235,0.08),inset 0 1px 0 rgba(255,255,255,0.06);
+}
+select.form-control{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11.5l-5-5h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+  padding-right:32px;
+}
+textarea.form-control{resize:vertical;min-height:80px}
+
+/* ── Line Items ── */
+.line-item{
+  display:grid;grid-template-columns:2fr 80px 1fr 1fr 40px;gap:10px;
+  align-items:center;margin-bottom:10px;
+  padding:12px;border-radius:10px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.04);
+  transition:background 0.2s;
+}
+.line-item:hover{background:rgba(255,255,255,0.04)}
+.line-remove{
+  width:32px;height:32px;border-radius:8px;border:none;
+  background:rgba(244,63,94,0.1);color:var(--rose);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.25s;font-size:0.8rem;
+}
+.line-remove:hover{background:rgba(244,63,94,0.2)}
+
+/* ── Total Row ── */
+.total-row{
+  display:flex;align-items:center;justify-content:flex-end;gap:20px;
+  padding:16px 12px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  font-family:'Roboto Mono',monospace;
+}
+.total-label{font-size:0.85rem;color:var(--text-muted)}
+.total-value{font-size:1.2rem;font-weight:800;
+  background:linear-gradient(135deg,var(--text-primary),var(--cyan-accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* ── Radio Group ── */
+.radio-group{display:flex;gap:12px;flex-wrap:wrap}
+.radio-item{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 16px;border-radius:8px;
+  background:var(--glass-bg);border:1px solid var(--glass-border);
+  cursor:pointer;transition:all 0.25s;font-size:0.84rem;color:var(--text-secondary);
+}
+.radio-item:hover{background:var(--glass-bg-hover);color:var(--text-primary)}
+.radio-item.selected{
+  background:rgba(37,99,235,0.12);
+  border-color:rgba(37,99,235,0.3);
+  color:var(--blue-hover);
+}
+.radio-item input[type=radio]{display:none}
+.radio-dot{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid var(--glass-border);
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.25s;
+}
+.radio-item.selected .radio-dot{
+  border-color:var(--blue-primary);
+}
+.radio-item.selected .radio-dot::after{
+  content:'';width:8px;height:8px;border-radius:50%;
+  background:var(--blue-primary);
+}
+
+/* ── Card Light Track ── */
+.card-light{position:absolute;inset:0;border-radius:16px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:0}
+.card:hover .card-light{opacity:1}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .topbar{left:0}
+  .main{margin-left:0}
+  .status-grid{grid-template-columns:1fr}
+  .line-item{grid-template-columns:1fr;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">
+      <i class="fas fa-cube"></i>
+      <div><span>AltNET ECOUNT</span><small>ERP System v2.0</small></div>
+    </div>
+  </div>
+  <div class="nav">
+    <div class="nav-label">메인</div>
+    <a href="dashboard.html"><i class="fas fa-chart-pie"></i> 대시보드</a>
+    <a href="#"><i class="fas fa-file-invoice-dollar"></i> 매출/매입</a>
+    <div class="nav-label">관리</div>
+    <a href="#"><i class="fas fa-building"></i> 업체 관리</a>
+    <a href="#"><i class="fas fa-truck"></i> 매입처 관리</a>
+    <a href="#"><i class="fas fa-box-open"></i> 제품 코드</a>
+    <a href="#" class="active"><i class="fas fa-file-alt"></i> 세금계산서</a>
+    <div class="nav-label">시스템</div>
+    <a href="#"><i class="fas fa-clipboard-list"></i> 감사 로그</a>
+    <a href="#"><i class="fas fa-users-cog"></i> 사용자 관리</a>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar">홍</div>
+    <div class="user-info">
+      <div class="name">홍길동</div>
+      <div class="role">관리자</div>
+    </div>
+  </div>
+</nav>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="topbar-title"><i class="fas fa-file-alt" style="color:var(--cyan-accent);margin-right:8px"></i> 세금계산서 발행요청</div>
+</header>
+
+<!-- Main -->
+<main class="main">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2><i class="fas fa-file-invoice"></i> 세금계산서 관리</h2>
+    <button class="btn btn-primary" onclick="openModal()">
+      <i class="fas fa-plus"></i> 발행 요청 등록
+    </button>
+  </div>
+
+  <!-- Status Summary -->
+  <div class="status-grid">
+    <div class="status-card">
+      <div class="status-icon req"><i class="fas fa-paper-plane"></i></div>
+      <div class="status-text">
+        <div class="count">8</div>
+        <div class="label">요청 (Requested)</div>
+      </div>
+    </div>
+    <div class="status-card">
+      <div class="status-icon pend"><i class="fas fa-clock"></i></div>
+      <div class="status-text">
+        <div class="count">3</div>
+        <div class="label">보류 (Pending)</div>
+      </div>
+    </div>
+    <div class="status-card">
+      <div class="status-icon done"><i class="fas fa-check-circle"></i></div>
+      <div class="status-text">
+        <div class="count">42</div>
+        <div class="label">완료 (Completed)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table: Pending -->
+  <div class="card" onmousemove="trackLight(this,event)" onmouseleave="clearLight(this)">
+    <div class="card-light"></div>
+    <div class="card-header">
+      <h3><i class="fas fa-hourglass-half"></i> 대기 / 보류 건</h3>
+      <span style="font-size:0.78rem;color:var(--text-muted)">11건</span>
+    </div>
+    <div class="card-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:50px">No</th>
+            <th>요청일</th>
+            <th>업체명</th>
+            <th>프로젝트</th>
+            <th>상태</th>
+            <th style="text-align:right">금액</th>
+            <th style="text-align:center">관리</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr onclick="openModal('edit')">
+            <td>11</td>
+            <td>2026-02-14</td>
+            <td>(주)삼성전자</td>
+            <td>반도체 설비 구축</td>
+            <td><span class="badge badge-req">요청</span></td>
+            <td class="amount">₩ 32,500,000</td>
+            <td style="text-align:center">
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openModal('edit')"><i class="fas fa-edit"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>2026-02-13</td>
+            <td>LG디스플레이</td>
+            <td>OLED 라인 증설</td>
+            <td><span class="badge badge-pend">보류</span></td>
+            <td class="amount">₩ 18,200,000</td>
+            <td style="text-align:center">
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openModal('edit')"><i class="fas fa-edit"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td>2026-02-12</td>
+            <td>SK하이닉스</td>
+            <td>HBM 생산 계약</td>
+            <td><span class="badge badge-req">요청</span></td>
+            <td class="amount">₩ 45,800,000</td>
+            <td style="text-align:center">
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openModal('edit')"><i class="fas fa-edit"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>2026-02-11</td>
+            <td>현대자동차</td>
+            <td>EV 부품 납품</td>
+            <td><span class="badge badge-req">요청</span></td>
+            <td class="amount">₩ 22,100,000</td>
+            <td style="text-align:center">
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openModal('edit')"><i class="fas fa-edit"></i></button>
+            </td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>2026-02-10</td>
+            <td>네이버(주)</td>
+            <td>클라우드 인프라</td>
+            <td><span class="badge badge-pend">보류</span></td>
+            <td class="amount">₩ 9,850,000</td>
+            <td style="text-align:center">
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openModal('edit')"><i class="fas fa-edit"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Completed Table -->
+  <div class="card" onmousemove="trackLight(this,event)" onmouseleave="clearLight(this)">
+    <div class="card-light"></div>
+    <div class="card-header">
+      <h3><i class="fas fa-check-double"></i> 완료 건</h3>
+      <span style="font-size:0.78rem;color:var(--text-muted)">42건</span>
+    </div>
+    <div class="card-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:50px">No</th>
+            <th>완료일</th>
+            <th>업체명</th>
+            <th>프로젝트</th>
+            <th>상태</th>
+            <th style="text-align:right">금액</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>6</td>
+            <td>2026-02-09</td>
+            <td>카카오(주)</td>
+            <td>AI 서비스 구축</td>
+            <td><span class="badge badge-done">완료</span></td>
+            <td class="amount">₩ 15,600,000</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>2026-02-07</td>
+            <td>포스코홀딩스</td>
+            <td>철강 원자재</td>
+            <td><span class="badge badge-done">완료</span></td>
+            <td class="amount">₩ 67,300,000</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>2026-02-05</td>
+            <td>한화솔루션</td>
+            <td>태양광 모듈</td>
+            <td><span class="badge badge-done">완료</span></td>
+            <td class="amount">₩ 28,900,000</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">...</button>
+        <button class="page-btn">14</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ── 2.0: Glass Modal / Popup ── -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-accent"></div>
+    <div class="modal-header">
+      <h3><i class="fas fa-file-invoice"></i> <span id="modalTitle">발행 요청 등록</span></h3>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>요청일</label>
+        <input type="date" class="form-control" value="2026-02-14">
+      </div>
+      <div class="form-group">
+        <label>업체 선택</label>
+        <select class="form-control">
+          <option value="">-- 업체를 선택하세요 --</option>
+          <option>(주)삼성전자</option>
+          <option>LG디스플레이</option>
+          <option>SK하이닉스</option>
+          <option>현대자동차</option>
+          <option>네이버(주)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>프로젝트명</label>
+        <input type="text" class="form-control" placeholder="프로젝트명을 입력하세요">
+      </div>
+
+      <!-- Line Items -->
+      <div class="form-group">
+        <label>품목 내역</label>
+        <div id="lineItems">
+          <div class="line-item">
+            <input type="text" class="form-control" placeholder="품목명">
+            <input type="number" class="form-control" placeholder="수량" style="text-align:center">
+            <input type="text" class="form-control" placeholder="단가" style="text-align:right">
+            <input type="text" class="form-control" placeholder="소계" style="text-align:right" readonly>
+            <button class="line-remove" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addLineItem()">
+          <i class="fas fa-plus"></i> 품목 추가
+        </button>
+      </div>
+
+      <!-- Total -->
+      <div class="total-row">
+        <span class="total-label">공급가액</span>
+        <span class="total-value">₩ 0</span>
+        <span class="total-label" style="margin-left:20px">VAT (10%)</span>
+        <span class="total-value" style="font-size:1rem">₩ 0</span>
+      </div>
+
+      <!-- Status Radio -->
+      <div class="form-group" style="margin-top:18px">
+        <label>상태</label>
+        <div class="radio-group">
+          <label class="radio-item selected" onclick="selectRadio(this)">
+            <input type="radio" name="status" value="requested" checked>
+            <span class="radio-dot"></span> 요청
+          </label>
+          <label class="radio-item" onclick="selectRadio(this)">
+            <input type="radio" name="status" value="pending">
+            <span class="radio-dot"></span> 보류
+          </label>
+          <label class="radio-item" onclick="selectRadio(this)">
+            <input type="radio" name="status" value="completed">
+            <span class="radio-dot"></span> 완료
+          </label>
+        </div>
+      </div>
+
+      <!-- Pending Reason -->
+      <div class="form-group" id="pendingReason" style="display:none;margin-top:12px">
+        <label>보류 사유</label>
+        <textarea class="form-control" placeholder="보류 사유를 입력하세요"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">취소</button>
+      <button class="btn btn-success" onclick="closeModal()">
+        <i class="fas fa-save"></i> 저장
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Modal
+function openModal(mode) {
+  document.getElementById('modal').classList.add('show');
+  document.getElementById('modalTitle').textContent = mode === 'edit' ? '발행 요청 편집' : '발행 요청 등록';
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+// Line Items
+function addLineItem() {
+  const container = document.getElementById('lineItems');
+  const item = document.createElement('div');
+  item.className = 'line-item';
+  item.innerHTML = `
+    <input type="text" class="form-control" placeholder="품목명">
+    <input type="number" class="form-control" placeholder="수량" style="text-align:center">
+    <input type="text" class="form-control" placeholder="단가" style="text-align:right">
+    <input type="text" class="form-control" placeholder="소계" style="text-align:right" readonly>
+    <button class="line-remove" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+  `;
+  container.appendChild(item);
+}
+
+// Radio
+function selectRadio(el) {
+  document.querySelectorAll('.radio-item').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+  const val = el.querySelector('input').value;
+  document.getElementById('pendingReason').style.display = val === 'pending' ? 'block' : 'none';
+}
+
+// 2.0: Light Track
+function trackLight(el, e) {
+  const light = el.querySelector('.card-light');
+  if (!light) return;
+  const rect = el.getBoundingClientRect();
+  light.style.background = `radial-gradient(350px circle at ${e.clientX - rect.left}px ${e.clientY - rect.top}px, rgba(34,211,238,0.04), transparent 60%)`;
+}
+function clearLight(el) {
+  const light = el.querySelector('.card-light');
+  if (light) light.style.background = '';
+}
+
+// Close modal on overlay click
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
