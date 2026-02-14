@@ -67,7 +67,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 
 <!-- Modal -->
 <div class="modal-overlay" id="companyModal">
-    <div class="modal-box">
+    <div class="modal-box" style="max-width:580px;">
         <div class="modal-header">
             <h4 id="modal-title">업체 등록</h4>
             <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -76,21 +76,23 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
             <?= CSRF::field() ?>
             <input type="hidden" name="id" id="company_id" value="">
             <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">업체명 <span class="text-danger">*</span></label>
-                    <input type="text" name="name" id="f_name" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">담당자</label>
-                    <input type="text" name="contact_person" id="f_contact" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">연락처</label>
-                    <input type="text" name="phone" id="f_phone" class="form-control input-phone">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">이메일</label>
-                    <input type="email" name="email" id="f_email" class="form-control">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label class="form-label">업체명 <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="f_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">담당자</label>
+                        <input type="text" name="contact_person" id="f_contact" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">연락처</label>
+                        <input type="text" name="phone" id="f_phone" class="form-control input-phone">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">이메일</label>
+                        <input type="email" name="email" id="f_email" class="form-control">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">주소</label>

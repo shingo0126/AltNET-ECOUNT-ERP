@@ -1,7 +1,9 @@
 <?php $cp = getParam('page', 'dashboard'); ?>
 <nav class="sidebar">
     <div class="sidebar-header">
-        <img src="assets/images/altnet_logo.png" alt="AltNET">
+        <div class="logo-box">
+            <img src="assets/images/altnet_logo.png" alt="AltNET">
+        </div>
         <div class="brand-text">AltNET ECOUNT ERP</div>
     </div>
     
