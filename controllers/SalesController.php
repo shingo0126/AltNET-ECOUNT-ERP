@@ -22,13 +22,15 @@ class SalesController {
         $pag = paginate($total, $perPage, $page);
         
         $sales = $db->fetchAll(
-            "SELECT s.*, c.name as company_name, si.name as item_name, si.sort_order as item_sort,
+            "SELECT s.*, c.name as company_name,
                     u.name as user_name,
-                    COALESCE((SELECT SUM(p2.total_amount) FROM purchases p2 WHERE p2.sale_id=s.id AND p2.is_deleted=0),0) as purchase_total
+                    COALESCE((SELECT SUM(p2.total_amount) FROM purchases p2 WHERE p2.sale_id=s.id AND p2.is_deleted=0),0) as purchase_total,
+                    fi.name as first_item_name, fi.sort_order as first_item_sort
              FROM sales s 
              LEFT JOIN companies c ON s.company_id=c.id
-             LEFT JOIN sale_items si ON s.sale_item_id=si.id
              LEFT JOIN users u ON s.user_id=u.id
+             LEFT JOIN sale_details sd_first ON sd_first.sale_id=s.id AND sd_first.sort_order=0
+             LEFT JOIN sale_items fi ON fi.id=sd_first.sale_item_id
              WHERE $where 
              ORDER BY s.sale_date DESC, s.id DESC 
              LIMIT {$pag['per_page']} OFFSET {$pag['offset']}",
@@ -344,10 +346,11 @@ class SalesController {
         $sales = $db->fetchAll(
             "SELECT s.sale_number, s.sale_date, c.name as company_name, s.total_amount, s.vat_amount, 
                     COALESCE((SELECT SUM(p.total_amount) FROM purchases p WHERE p.sale_id=s.id AND p.is_deleted=0),0) as purchase_total,
-                    si.sort_order as item_sort, si.name as item_name
+                    fi.sort_order as first_item_sort, fi.name as first_item_name
              FROM sales s 
              LEFT JOIN companies c ON s.company_id=c.id 
-             LEFT JOIN sale_items si ON s.sale_item_id=si.id
+             LEFT JOIN sale_details sd_first ON sd_first.sale_id=s.id AND sd_first.sort_order=0
+             LEFT JOIN sale_items fi ON fi.id=sd_first.sale_item_id
              WHERE s.is_deleted=0 AND YEAR(s.sale_date)=? AND MONTH(s.sale_date)=?
              ORDER BY s.sale_date",
             [$year, $month]
@@ -359,9 +362,10 @@ class SalesController {
         $rows = [];
         foreach ($sales as $s) {
             $profit = $s['total_amount'] - $s['purchase_total'];
+            $itemCode = $s['first_item_sort'] ? $s['first_item_sort'] . '.' . $s['first_item_name'] : '-';
             $rows[] = [
                 $s['sale_number'], $s['sale_date'], $s['company_name'],
-                $s['item_sort'] . '.' . $s['item_name'],
+                $itemCode,
                 number_format($s['total_amount']), number_format($s['vat_amount']),
                 number_format($s['purchase_total']), number_format($profit)
             ];
