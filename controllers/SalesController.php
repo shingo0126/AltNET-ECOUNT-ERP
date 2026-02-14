@@ -165,7 +165,7 @@ class SalesController {
             $saleData = [
                 'sale_date'    => postParam('sale_date', date('Y-m-d')),
                 'company_id'   => (int)postParam('company_id'),
-                'sale_item_id' => postParam('sale_item_id') ?: null,
+                'sale_item_id' => null,  // 행별 sale_item_id로 이동됨 (호환성 유지)
                 'total_amount' => (int)str_replace(',', '', postParam('sale_total', '0')),
                 'vat_amount'   => (int)str_replace(',', '', postParam('sale_vat', '0')),
                 'user_id'      => Session::getUserId(),
@@ -192,8 +192,9 @@ class SalesController {
                 AuditLog::log('INSERT', 'sales', $saleId, null, $saleData);
             }
             
-            // Save sale details
+            // Save sale details (행별 sale_item_id 포함)
             $productNames = $_POST['product_name'] ?? [];
+            $saleItemIds = $_POST['sale_item_id'] ?? [];
             $unitPrices = $_POST['unit_price'] ?? [];
             $quantities = $_POST['quantity'] ?? [];
             
@@ -201,9 +202,11 @@ class SalesController {
                 if (empty(trim($productNames[$i]))) continue;
                 $price = (int)str_replace(',', '', $unitPrices[$i] ?? '0');
                 $qty = (int)($quantities[$i] ?? 1);
+                $itemId = !empty($saleItemIds[$i]) ? (int)$saleItemIds[$i] : null;
                 $db->insert('sale_details', [
                     'sale_id'      => $saleId,
                     'product_name' => trim($productNames[$i]),
+                    'sale_item_id' => $itemId,
                     'unit_price'   => $price,
                     'quantity'     => $qty,
                     'subtotal'     => $price * $qty,
@@ -211,14 +214,14 @@ class SalesController {
                 ]);
             }
             
-            // Save purchases
+            // Save purchases (매입업체는 행별로 이동됨)
             $pDates = $_POST['p_date'] ?? [];
-            $pVendors = $_POST['p_vendor_id'] ?? [];
             $pTotals = $_POST['p_total'] ?? [];
             $pVats = $_POST['p_vat'] ?? [];
             $pProducts = $_POST['p_product_name'] ?? [];
             $pPrices = $_POST['p_unit_price'] ?? [];
             $pQtys = $_POST['p_quantity'] ?? [];
+            $pVendorsByBlock = $_POST['p_vendor_id'] ?? [];  // p_vendor_id[블록idx][행idx]
             $pIds = $_POST['p_id'] ?? [];
             
             // Remove old purchases if editing
@@ -232,32 +235,51 @@ class SalesController {
             
             if (!empty($pDates)) {
                 for ($pi = 0; $pi < count($pDates); $pi++) {
-                    if (empty($pVendors[$pi])) continue;
+                    // 매입업체는 행별로 관리됨 - 블록의 첫 번째 행 vendor_id를 대표로 사용
+                    $blockVendors = $pVendorsByBlock[$pi] ?? [];
+                    $firstVendorId = 0;
+                    if (is_array($blockVendors)) {
+                        foreach ($blockVendors as $bv) {
+                            if (!empty($bv)) { $firstVendorId = (int)$bv; break; }
+                        }
+                    }
+                    
+                    // 매입 제품이 하나도 없으면 스킵
+                    $pProdArr = $pProducts[$pi] ?? [];
+                    $hasProducts = false;
+                    if (is_array($pProdArr)) {
+                        foreach ($pProdArr as $pn) {
+                            if (!empty(trim($pn))) { $hasProducts = true; break; }
+                        }
+                    }
+                    if (!$hasProducts) continue;
                     
                     $pData = [
                         'purchase_number' => generatePurchaseNumber($pDates[$pi]),
                         'sale_id'         => $saleId,
                         'purchase_date'   => $pDates[$pi],
-                        'vendor_id'       => (int)$pVendors[$pi],
+                        'vendor_id'       => $firstVendorId,
                         'total_amount'    => (int)str_replace(',', '', $pTotals[$pi] ?? '0'),
                         'vat_amount'      => (int)str_replace(',', '', $pVats[$pi] ?? '0'),
                         'user_id'         => Session::getUserId(),
                     ];
                     $purchaseId = $db->insert('purchases', $pData);
                     
-                    // Purchase details
-                    $pProdArr = $pProducts[$pi] ?? [];
+                    // Purchase details (행별 vendor_id 포함)
                     $pPriceArr = $pPrices[$pi] ?? [];
                     $pQtyArr = $pQtys[$pi] ?? [];
+                    $pVendorArr = $blockVendors;
                     
                     if (is_array($pProdArr)) {
                         for ($di = 0; $di < count($pProdArr); $di++) {
                             if (empty(trim($pProdArr[$di]))) continue;
                             $dprice = (int)str_replace(',', '', $pPriceArr[$di] ?? '0');
                             $dqty = (int)($pQtyArr[$di] ?? 1);
+                            $dVendorId = !empty($pVendorArr[$di]) ? (int)$pVendorArr[$di] : null;
                             $db->insert('purchase_details', [
                                 'purchase_id' => $purchaseId,
                                 'product_name' => trim($pProdArr[$di]),
+                                'vendor_id'   => $dVendorId,
                                 'unit_price'  => $dprice,
                                 'quantity'    => $dqty,
                                 'subtotal'    => $dprice * $dqty,

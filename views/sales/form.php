@@ -34,40 +34,43 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">제품 코드</label>
-                        <select name="sale_item_id" class="form-control">
-                            <option value="">-- 선택 --</option>
-                            <?php foreach ($saleItems as $si): ?>
-                            <option value="<?= $si['id'] ?>" <?= ($sale['sale_item_id'] ?? '') == $si['id'] ? 'selected' : '' ?>><?= e($si['sort_order'] . '.' . $si['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
                 </div>
                 
                 <!-- Sale Line Items -->
                 <div class="form-label" style="margin-top:12px;">판매 제품</div>
-                <div class="line-item-header">
-                    <span>제품명</span><span>단가</span><span>수량</span><span>소계</span><span></span>
+                <div class="sale-line-header">
+                    <span>제품명</span><span>제품코드</span><span>단가</span><span>수량</span><span>소계</span><span></span>
                 </div>
                 <div id="sale-lines" class="line-items">
                     <?php if (!empty($saleDetails)): ?>
                         <?php foreach ($saleDetails as $idx => $d): ?>
-                        <div class="line-item">
+                        <div class="sale-line-item">
                             <input type="text" name="product_name[]" class="form-control" placeholder="제품명" value="<?= e($d['product_name']) ?>" required>
+                            <select name="sale_item_id[]" class="form-control">
+                                <option value="">-- 선택 --</option>
+                                <?php foreach ($saleItems as $si): ?>
+                                <option value="<?= $si['id'] ?>" <?= ($d['sale_item_id'] ?? '') == $si['id'] ? 'selected' : '' ?>><?= e($si['sort_order'] . '.' . $si['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                             <input type="text" name="unit_price[]" class="form-control input-money" placeholder="단가" value="<?= formatMoney($d['unit_price']) ?>" oninput="calcSaleLine(this)">
                             <input type="number" name="quantity[]" class="form-control" value="<?= $d['quantity'] ?>" min="1" oninput="calcSaleLine(this)">
                             <input type="text" class="form-control input-money sale-subtotal" readonly value="<?= formatMoney($d['subtotal']) ?>">
-                            <button type="button" class="btn-remove" onclick="removeLine(this)"><i class="fas fa-times"></i></button>
+                            <button type="button" class="btn-remove" onclick="removeSaleLine(this)"><i class="fas fa-times"></i></button>
                         </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div class="line-item">
+                        <div class="sale-line-item">
                             <input type="text" name="product_name[]" class="form-control" placeholder="제품명" required>
+                            <select name="sale_item_id[]" class="form-control">
+                                <option value="">-- 선택 --</option>
+                                <?php foreach ($saleItems as $si): ?>
+                                <option value="<?= $si['id'] ?>"><?= e($si['sort_order'] . '.' . $si['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                             <input type="text" name="unit_price[]" class="form-control input-money" placeholder="단가" oninput="calcSaleLine(this)">
                             <input type="number" name="quantity[]" class="form-control" value="1" min="1" oninput="calcSaleLine(this)">
                             <input type="text" class="form-control input-money sale-subtotal" readonly value="0">
-                            <button type="button" class="btn-remove" onclick="removeLine(this)"><i class="fas fa-times"></i></button>
+                            <button type="button" class="btn-remove" onclick="removeSaleLine(this)"><i class="fas fa-times"></i></button>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -107,25 +110,23 @@
                                 <label class="form-label">매입일자</label>
                                 <input type="text" name="p_date[]" class="form-control datepicker" value="<?= e($p['purchase_date']) ?>">
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">매입 업체</label>
-                                <select name="p_vendor_id[]" class="form-control">
-                                    <option value="">-- 선택 --</option>
-                                    <?php foreach ($vendors as $v): ?>
-                                    <option value="<?= $v['id'] ?>" <?= $p['vendor_id'] == $v['id'] ? 'selected' : '' ?>><?= e($v['name']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
                         </div>
-                        <div class="line-item-header"><span>제품명</span><span>단가</span><span>수량</span><span>소계</span><span></span></div>
+                        <div class="form-label" style="margin-top:8px;color:var(--amber-glow);font-weight:700;font-size:12px;"><i class="fas fa-box"></i> 매입 제품</div>
+                        <div class="purch-line-header"><span>제품명</span><span>매입업체</span><span>단가</span><span>수량</span><span>소계</span><span></span></div>
                         <div class="purchase-lines line-items">
                             <?php foreach ($p['details'] as $pd): ?>
-                            <div class="line-item">
+                            <div class="purch-line-item">
                                 <input type="text" name="p_product_name[<?= $pi ?>][]" class="form-control" value="<?= e($pd['product_name']) ?>">
+                                <select name="p_vendor_id[<?= $pi ?>][]" class="form-control">
+                                    <option value="">-- 선택 --</option>
+                                    <?php foreach ($vendors as $v): ?>
+                                    <option value="<?= $v['id'] ?>" <?= ($pd['vendor_id'] ?? $p['vendor_id'] ?? '') == $v['id'] ? 'selected' : '' ?>><?= e($v['name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
                                 <input type="text" name="p_unit_price[<?= $pi ?>][]" class="form-control input-money" value="<?= formatMoney($pd['unit_price']) ?>" oninput="calcPurchaseLine(this)">
                                 <input type="number" name="p_quantity[<?= $pi ?>][]" class="form-control" value="<?= $pd['quantity'] ?>" min="1" oninput="calcPurchaseLine(this)">
                                 <input type="text" class="form-control input-money p-subtotal" readonly value="<?= formatMoney($pd['subtotal']) ?>">
-                                <button type="button" class="btn-remove" onclick="removeLine(this);calcPurchaseTotals();"><i class="fas fa-times"></i></button>
+                                <button type="button" class="btn-remove" onclick="removePurchLine(this)"><i class="fas fa-times"></i></button>
                             </div>
                             <?php endforeach; ?>
                         </div>
@@ -190,12 +191,13 @@
 
 <?php
 $vendorsJson = json_encode($vendors, JSON_UNESCAPED_UNICODE);
+$saleItemsJson = json_encode($saleItems, JSON_UNESCAPED_UNICODE);
 $pageScript = <<<JS
 var purchaseIdx = document.querySelectorAll('.purchase-block').length;
 var vendorsData = $vendorsJson;
+var saleItemsData = $saleItemsJson;
 
-// === Flatpickr 초기화 (과거일자 선택 가능, 기존 값 보존) ===
-// 매출일자: 기존 값이 있으면 그 값 사용, 없으면 오늘
+// === Flatpickr 초기화 ===
 var saleDateInput = document.getElementById('sale_date');
 var saleDateVal = saleDateInput ? saleDateInput.value : '';
 flatpickr('#sale_date', { 
@@ -204,7 +206,6 @@ flatpickr('#sale_date', {
     defaultDate: saleDateVal || 'today',
     allowInput: true,
     onChange: function(selectedDates, dateStr) {
-        // 매출일자 변경 시 매출번호 자동 갱신 (신규 등록 시에만)
         var saleIdField = document.querySelector('input[name="sale_id"]');
         if (!saleIdField) {
             updateSaleNumber(dateStr);
@@ -212,7 +213,6 @@ flatpickr('#sale_date', {
     }
 });
 
-// 매입일자 datepicker: 기존 값 보존
 document.querySelectorAll('.purchase-block .datepicker').forEach(function(el) {
     var existingVal = el.value;
     flatpickr(el, { 
@@ -223,7 +223,7 @@ document.querySelectorAll('.purchase-block .datepicker').forEach(function(el) {
     });
 });
 
-// === 매출번호 자동갱신 AJAX (매출일자 변경 시) ===
+// === 매출번호 자동갱신 AJAX ===
 function updateSaleNumber(dateStr) {
     if (!dateStr) return;
     fetch('?page=sales&action=generateNumber&date=' + encodeURIComponent(dateStr))
@@ -236,22 +236,43 @@ function updateSaleNumber(dateStr) {
         .catch(function(err) { console.error('매출번호 갱신 실패:', err); });
 }
 
-// Add sale line
+// === 제품코드 옵션 HTML 생성 ===
+function buildSaleItemOptions(selectedId) {
+    var opts = '<option value="">-- 선택 --</option>';
+    saleItemsData.forEach(function(si) {
+        var sel = (selectedId && selectedId == si.id) ? ' selected' : '';
+        opts += '<option value="'+si.id+'"'+sel+'>'+si.sort_order+'.'+si.name+'</option>';
+    });
+    return opts;
+}
+
+// === 매입업체 옵션 HTML 생성 ===
+function buildVendorOptions(selectedId) {
+    var opts = '<option value="">-- 선택 --</option>';
+    vendorsData.forEach(function(v) {
+        var sel = (selectedId && selectedId == v.id) ? ' selected' : '';
+        opts += '<option value="'+v.id+'"'+sel+'>'+v.name+'</option>';
+    });
+    return opts;
+}
+
+// === 매출 라인 추가 ===
 function addSaleLine() {
-    var html = '<div class="line-item">' +
+    var html = '<div class="sale-line-item">' +
         '<input type="text" name="product_name[]" class="form-control" placeholder="제품명" required>' +
+        '<select name="sale_item_id[]" class="form-control">' + buildSaleItemOptions() + '</select>' +
         '<input type="text" name="unit_price[]" class="form-control input-money" placeholder="단가" oninput="calcSaleLine(this)">' +
         '<input type="number" name="quantity[]" class="form-control" value="1" min="1" oninput="calcSaleLine(this)">' +
         '<input type="text" class="form-control input-money sale-subtotal" readonly value="0">' +
-        '<button type="button" class="btn-remove" onclick="removeLine(this)"><i class="fas fa-times"></i></button>' +
+        '<button type="button" class="btn-remove" onclick="removeSaleLine(this)"><i class="fas fa-times"></i></button>' +
         '</div>';
     document.getElementById('sale-lines').insertAdjacentHTML('beforeend', html);
     initMoneyInputs();
 }
 
-// Calculate sale line
+// === 매출 라인 계산 ===
 function calcSaleLine(el) {
-    var row = el.closest('.line-item');
+    var row = el.closest('.sale-line-item');
     var price = parseNumber(row.querySelector('[name="unit_price[]"]').value);
     var qty = parseInt(row.querySelector('[name="quantity[]"]').value) || 1;
     var subtotal = price * qty;
@@ -259,7 +280,7 @@ function calcSaleLine(el) {
     calcSaleTotal();
 }
 
-// Calculate sale total
+// === 매출 합계 ===
 function calcSaleTotal() {
     var total = 0;
     document.querySelectorAll('.sale-subtotal').forEach(function(el) {
@@ -273,23 +294,21 @@ function calcSaleTotal() {
     calcProfit();
 }
 
-// Remove line item
-function removeLine(btn) {
+// === 매출 라인 삭제 ===
+function removeSaleLine(btn) {
     var container = btn.closest('.line-items');
-    if (container.querySelectorAll('.line-item').length > 1) {
-        btn.closest('.line-item').remove();
+    if (container.querySelectorAll('.sale-line-item').length > 1) {
+        btn.closest('.sale-line-item').remove();
         calcSaleTotal();
-        calcPurchaseTotals();
     }
 }
 
-// Add purchase block
+// === 매입 블록 추가 ===
 function addPurchaseBlock() {
     var noMsg = document.getElementById('no-purchase-msg');
     if (noMsg) noMsg.remove();
     
-    var opts = '<option value="">-- 선택 --</option>';
-    vendorsData.forEach(function(v) { opts += '<option value="'+v.id+'">'+v.name+'</option>'; });
+    var vendorOpts = buildVendorOptions();
     
     var html = '<div class="purchase-block" style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:12px;margin-bottom:12px;background:rgba(245,158,11,0.04);">' +
         '<div class="d-flex justify-between align-center mb-1">' +
@@ -297,15 +316,17 @@ function addPurchaseBlock() {
         '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\\'.purchase-block\\').remove();calcPurchaseTotals();">삭제</button></div>' +
         '<div class="form-row">' +
         '<div class="form-group"><label class="form-label">매입일자</label><input type="text" name="p_date[]" class="form-control datepicker" value="' + (document.getElementById('sale_date').value || new Date().toISOString().slice(0,10)) + '"></div>' +
-        '<div class="form-group"><label class="form-label">매입 업체</label><select name="p_vendor_id[]" class="form-control">' + opts + '</select></div></div>' +
-        '<div class="line-item-header"><span>제품명</span><span>단가</span><span>수량</span><span>소계</span><span></span></div>' +
+        '</div>' +
+        '<div class="form-label" style="margin-top:8px;color:var(--amber-glow);font-weight:700;font-size:12px;"><i class="fas fa-box"></i> 매입 제품</div>' +
+        '<div class="purch-line-header"><span>제품명</span><span>매입업체</span><span>단가</span><span>수량</span><span>소계</span><span></span></div>' +
         '<div class="purchase-lines line-items">' +
-        '<div class="line-item">' +
+        '<div class="purch-line-item">' +
         '<input type="text" name="p_product_name['+purchaseIdx+'][]" class="form-control" placeholder="제품명">' +
+        '<select name="p_vendor_id['+purchaseIdx+'][]" class="form-control">' + vendorOpts + '</select>' +
         '<input type="text" name="p_unit_price['+purchaseIdx+'][]" class="form-control input-money" placeholder="단가" oninput="calcPurchaseLine(this)">' +
         '<input type="number" name="p_quantity['+purchaseIdx+'][]" class="form-control" value="1" min="1" oninput="calcPurchaseLine(this)">' +
         '<input type="text" class="form-control input-money p-subtotal" readonly value="0">' +
-        '<button type="button" class="btn-remove" onclick="removeLine(this);calcPurchaseTotals();"><i class="fas fa-times"></i></button>' +
+        '<button type="button" class="btn-remove" onclick="removePurchLine(this)"><i class="fas fa-times"></i></button>' +
         '</div></div>' +
         '<button type="button" class="btn btn-outline btn-sm" onclick="addPurchaseLine(this,'+purchaseIdx+')"><i class="fas fa-plus"></i> 제품추가</button>' +
         '<input type="hidden" name="p_total[]" class="p-total-input" value="0">' +
@@ -315,7 +336,6 @@ function addPurchaseBlock() {
     
     document.getElementById('purchase-blocks').insertAdjacentHTML('beforeend', html);
     purchaseIdx++;
-    // 매입 추가 시 매출일자와 동일한 날짜로 기본 설정
     var currentSaleDate = document.getElementById('sale_date').value || 'today';
     var newDatepickers = document.querySelectorAll('.purchase-block:last-child .datepicker');
     newDatepickers.forEach(function(el) {
@@ -324,23 +344,34 @@ function addPurchaseBlock() {
     initMoneyInputs();
 }
 
-// Add purchase line
+// === 매입 라인 추가 ===
 function addPurchaseLine(btn, idx) {
     var container = btn.previousElementSibling;
     while (!container.classList.contains('line-items')) container = container.previousElementSibling;
-    var html = '<div class="line-item">' +
+    var vendorOpts = buildVendorOptions();
+    var html = '<div class="purch-line-item">' +
         '<input type="text" name="p_product_name['+idx+'][]" class="form-control" placeholder="제품명">' +
+        '<select name="p_vendor_id['+idx+'][]" class="form-control">' + vendorOpts + '</select>' +
         '<input type="text" name="p_unit_price['+idx+'][]" class="form-control input-money" placeholder="단가" oninput="calcPurchaseLine(this)">' +
         '<input type="number" name="p_quantity['+idx+'][]" class="form-control" value="1" min="1" oninput="calcPurchaseLine(this)">' +
         '<input type="text" class="form-control input-money p-subtotal" readonly value="0">' +
-        '<button type="button" class="btn-remove" onclick="removeLine(this);calcPurchaseTotals();"><i class="fas fa-times"></i></button></div>';
+        '<button type="button" class="btn-remove" onclick="removePurchLine(this)"><i class="fas fa-times"></i></button></div>';
     container.insertAdjacentHTML('beforeend', html);
     initMoneyInputs();
 }
 
-// Calc purchase line
+// === 매입 라인 삭제 ===
+function removePurchLine(btn) {
+    var container = btn.closest('.line-items');
+    if (container.querySelectorAll('.purch-line-item').length > 1) {
+        btn.closest('.purch-line-item').remove();
+        calcPurchaseTotals();
+    }
+}
+
+// === 매입 라인 계산 ===
 function calcPurchaseLine(el) {
-    var row = el.closest('.line-item');
+    var row = el.closest('.purch-line-item');
     var inputs = row.querySelectorAll('.input-money');
     var price = parseNumber(inputs[0].value);
     var qty = parseInt(row.querySelector('[type="number"]').value) || 1;
@@ -348,7 +379,7 @@ function calcPurchaseLine(el) {
     calcPurchaseTotals();
 }
 
-// Calc all purchase totals
+// === 매입 전체 합계 ===
 function calcPurchaseTotals() {
     var grandTotal = 0;
     document.querySelectorAll('.purchase-block').forEach(function(block) {
@@ -364,7 +395,7 @@ function calcPurchaseTotals() {
     calcProfit();
 }
 
-// Calc profit
+// === 영업이익 계산 ===
 function calcProfit() {
     var saleTotal = parseNumber(document.getElementById('sale-total-display').textContent);
     var purchaseTotal = parseNumber(document.getElementById('purchase-total-display').textContent);

@@ -1092,6 +1092,66 @@ select.form-control option {
 
 .line-item .input-money { min-width: 0; text-align: right; }
 
+/* === Sale line-item: 제품명 + 제품코드 + 단가 + 수량 + 소계 + X === */
+.sale-line-item {
+    display: grid;
+    grid-template-columns: minmax(80px,1.5fr) minmax(80px,1.2fr) minmax(80px,1fr) 60px minmax(80px,1fr) 32px;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.sale-line-item:last-child { border-bottom: none; }
+.sale-line-item .form-control { font-size: 12px; padding: 6px 7px; min-width: 0; }
+.sale-line-item .btn-remove {
+    width: 28px; height: 28px; min-width: 28px;
+    border: none; background: rgba(244,63,94,0.1); color: var(--rose);
+    border-radius: 50%; cursor: pointer; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s; flex-shrink: 0;
+}
+.sale-line-item .btn-remove:hover { background: rgba(244,63,94,0.25); }
+.sale-line-item .input-money { min-width: 0; text-align: right; }
+
+.sale-line-header {
+    display: grid;
+    grid-template-columns: minmax(80px,1.5fr) minmax(80px,1.2fr) minmax(80px,1fr) 60px minmax(80px,1fr) 32px;
+    gap: 6px; padding: 6px 0;
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* === Purchase line-item: 제품명 + 매입업체 + 단가 + 수량 + 소계 + X === */
+.purch-line-item {
+    display: grid;
+    grid-template-columns: minmax(80px,1.5fr) minmax(80px,1.2fr) minmax(80px,1fr) 60px minmax(80px,1fr) 32px;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.purch-line-item:last-child { border-bottom: none; }
+.purch-line-item .form-control { font-size: 12px; padding: 6px 7px; min-width: 0; }
+.purch-line-item .btn-remove {
+    width: 28px; height: 28px; min-width: 28px;
+    border: none; background: rgba(244,63,94,0.1); color: var(--rose);
+    border-radius: 50%; cursor: pointer; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s; flex-shrink: 0;
+}
+.purch-line-item .btn-remove:hover { background: rgba(244,63,94,0.25); }
+.purch-line-item .input-money { min-width: 0; text-align: right; }
+
+.purch-line-header {
+    display: grid;
+    grid-template-columns: minmax(80px,1.5fr) minmax(80px,1.2fr) minmax(80px,1fr) 60px minmax(80px,1fr) 32px;
+    gap: 6px; padding: 6px 0;
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
 .total-row {
     display: flex;
     justify-content: space-between;
