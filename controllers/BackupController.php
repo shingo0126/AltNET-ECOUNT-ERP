@@ -48,10 +48,14 @@ class BackupController {
         $config = require __DIR__ . '/../config/database.php';
         $appConfig = require __DIR__ . '/../config/app.php';
         
-        // [FIX #1] 경로 정규화: '..' 제거
+        // [FIX #1] 경로 정규화: '..' 제거, 디렉토리 보장
         $backupDir = $appConfig['backup_dir'];
-        if (!is_dir($backupDir)) mkdir($backupDir, 0750, true);
-        $backupDir = realpath($backupDir) . '/';
+        if (!is_dir($backupDir)) {
+            @mkdir($backupDir, 0755, true);
+        }
+        // realpath()는 디렉토리가 존재해야 동작 → 존재하지 않으면 원본 경로 사용
+        $resolved = realpath($backupDir);
+        $backupDir = ($resolved !== false) ? $resolved . '/' : $backupDir;
         
         $filename = 'backup_' . date('Ymd_His') . '.sql';
         $filepath = $backupDir . $filename;
@@ -65,13 +69,57 @@ class BackupController {
         if ($canExec) {
             // [FIX #5] mysqldump 존재 확인
             $mysqldumpPath = '';
+            // which 명령 시도 (Linux/Mac)
             exec('which mysqldump 2>/dev/null', $whichOut, $whichRc);
             if ($whichRc === 0 && !empty($whichOut)) {
                 $mysqldumpPath = trim($whichOut[0]);
-            } else {
-                // 일반적인 경로 직접 확인
-                foreach (['/usr/bin/mysqldump', '/usr/local/bin/mysqldump', '/usr/bin/mariadb-dump'] as $path) {
-                    if (file_exists($path) && is_executable($path)) {
+            }
+            
+            // which 실패 시 Windows(XAMPP/WAMP/Laragon) + Linux/Mac 경로 직접 탐색
+            if (empty($mysqldumpPath)) {
+                // where 명령 시도 (Windows)
+                if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                    exec('where mysqldump 2>NUL', $whereOut, $whereRc);
+                    if ($whereRc === 0 && !empty($whereOut)) {
+                        $mysqldumpPath = trim($whereOut[0]);
+                    }
+                }
+            }
+            
+            if (empty($mysqldumpPath)) {
+                $searchPaths = [
+                    // Linux
+                    '/usr/bin/mysqldump',
+                    '/usr/local/bin/mysqldump',
+                    '/usr/bin/mariadb-dump',
+                    '/usr/local/mysql/bin/mysqldump',
+                    // Mac (Homebrew)
+                    '/opt/homebrew/bin/mysqldump',
+                    '/opt/homebrew/opt/mysql/bin/mysqldump',
+                    '/opt/homebrew/opt/mariadb/bin/mysqldump',
+                ];
+                
+                // Windows XAMPP/WAMP/Laragon 경로 추가
+                if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                    $winPaths = [
+                        'C:/xampp/mysql/bin/mysqldump.exe',
+                        'C:/wamp64/bin/mysql/mysql8.0.31/bin/mysqldump.exe',
+                        'C:/wamp/bin/mysql/mysql8.0.31/bin/mysqldump.exe',
+                        'C:/laragon/bin/mysql/mysql-8.0.30-winx64/bin/mysqldump.exe',
+                        'C:/Program Files/MySQL/MySQL Server 8.0/bin/mysqldump.exe',
+                        'C:/Program Files/MariaDB 10.11/bin/mysqldump.exe',
+                    ];
+                    // glob으로 버전 무관 탐색
+                    foreach (glob('C:/xampp/mysql/bin/mysqldump*') as $g) { $winPaths[] = $g; }
+                    foreach (glob('C:/wamp64/bin/mysql/*/bin/mysqldump*') as $g) { $winPaths[] = $g; }
+                    foreach (glob('C:/laragon/bin/mysql/*/bin/mysqldump*') as $g) { $winPaths[] = $g; }
+                    foreach (glob('C:/Program Files/MySQL/*/bin/mysqldump*') as $g) { $winPaths[] = $g; }
+                    foreach (glob('C:/Program Files/MariaDB*/bin/mysqldump*') as $g) { $winPaths[] = $g; }
+                    $searchPaths = array_merge($searchPaths, array_unique($winPaths));
+                }
+                
+                foreach ($searchPaths as $path) {
+                    if (file_exists($path)) {
                         $mysqldumpPath = $path;
                         break;
                     }
@@ -172,6 +220,17 @@ class BackupController {
      */
     private function pdoBackup($filepath, $config) {
         try {
+            // 백업 디렉토리 존재 보장
+            $dir = dirname($filepath);
+            if (!is_dir($dir)) {
+                if (!@mkdir($dir, 0755, true)) {
+                    return '백업 디렉토리 생성 실패: ' . $dir . ' (권한을 확인하세요)';
+                }
+            }
+            if (!is_writable($dir)) {
+                return '백업 디렉토리 쓰기 권한 없음: ' . $dir . ' (chmod 755 또는 777로 변경하세요)';
+            }
+            
             $db = Database::getInstance();
             $tables = $db->fetchAll("SHOW TABLES");
             
