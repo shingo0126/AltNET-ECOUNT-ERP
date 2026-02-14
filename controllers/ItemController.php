@@ -12,15 +12,15 @@ class ItemController {
             "SELECT * FROM sale_items WHERE is_deleted=0 ORDER BY sort_order LIMIT {$pag['per_page']} OFFSET {$pag['offset']}"
         );
         
-        // Item analysis - quantity stats (SUM of sale_details.quantity per sale_item)
+        // Item analysis - quantity stats (sale_details.sale_item_id 기준 직접 집계)
         $itemStats = $db->fetchAll(
             "SELECT si.id, si.sort_order, si.name, 
                     COALESCE(SUM(sd.quantity), 0) as total_quantity,
                     COALESCE(SUM(sd.subtotal), 0) as total_amount
              FROM sale_items si 
-             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
-             LEFT JOIN sale_details sd ON sd.sale_id=s.id
-             WHERE si.is_deleted=0 
+             LEFT JOIN sale_details sd ON sd.sale_item_id=si.id
+             LEFT JOIN sales s ON s.id=sd.sale_id AND s.is_deleted=0
+             WHERE si.is_deleted=0 AND (sd.id IS NULL OR s.id IS NOT NULL)
              GROUP BY si.id, si.sort_order, si.name 
              ORDER BY si.sort_order"
         );
@@ -31,9 +31,9 @@ class ItemController {
                     COALESCE(SUM(sd.quantity), 0) as total_quantity,
                     COALESCE(SUM(sd.subtotal), 0) as total_amount
              FROM sale_items si 
-             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
-             LEFT JOIN sale_details sd ON sd.sale_id=s.id
-             WHERE si.is_deleted=0 
+             LEFT JOIN sale_details sd ON sd.sale_item_id=si.id
+             LEFT JOIN sales s ON s.id=sd.sale_id AND s.is_deleted=0
+             WHERE si.is_deleted=0 AND (sd.id IS NULL OR s.id IS NOT NULL)
              GROUP BY si.id, si.sort_order, si.name 
              ORDER BY total_quantity DESC
              LIMIT 30"
@@ -45,9 +45,9 @@ class ItemController {
                     COALESCE(SUM(sd.quantity), 0) as total_quantity,
                     COALESCE(SUM(sd.subtotal), 0) as total_amount
              FROM sale_items si 
-             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
-             LEFT JOIN sale_details sd ON sd.sale_id=s.id
-             WHERE si.is_deleted=0 
+             LEFT JOIN sale_details sd ON sd.sale_item_id=si.id
+             LEFT JOIN sales s ON s.id=sd.sale_id AND s.is_deleted=0
+             WHERE si.is_deleted=0 AND (sd.id IS NULL OR s.id IS NOT NULL)
              GROUP BY si.id, si.sort_order, si.name 
              ORDER BY total_amount DESC
              LIMIT 30"
@@ -59,9 +59,9 @@ class ItemController {
                     COALESCE(SUM(sd.quantity), 0) as total_quantity,
                     COALESCE(SUM(sd.subtotal), 0) as total_amount
              FROM sale_items si 
-             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
-             LEFT JOIN sale_details sd ON sd.sale_id=s.id
-             WHERE si.is_deleted=0 
+             LEFT JOIN sale_details sd ON sd.sale_item_id=si.id
+             LEFT JOIN sales s ON s.id=sd.sale_id AND s.is_deleted=0
+             WHERE si.is_deleted=0 AND (sd.id IS NULL OR s.id IS NOT NULL)
              GROUP BY si.id, si.sort_order, si.name 
              ORDER BY total_quantity DESC"
         );
@@ -72,9 +72,9 @@ class ItemController {
                     COALESCE(SUM(sd.quantity), 0) as total_quantity,
                     COALESCE(SUM(sd.subtotal), 0) as total_amount
              FROM sale_items si 
-             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
-             LEFT JOIN sale_details sd ON sd.sale_id=s.id
-             WHERE si.is_deleted=0 
+             LEFT JOIN sale_details sd ON sd.sale_item_id=si.id
+             LEFT JOIN sales s ON s.id=sd.sale_id AND s.is_deleted=0
+             WHERE si.is_deleted=0 AND (sd.id IS NULL OR s.id IS NOT NULL)
              GROUP BY si.id, si.sort_order, si.name 
              ORDER BY total_amount DESC"
         );
@@ -146,9 +146,9 @@ class ItemController {
                     COALESCE(SUM(sd.quantity), 0) as total_quantity,
                     COALESCE(SUM(sd.subtotal), 0) as total_amount
              FROM sale_items si 
-             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
-             LEFT JOIN sale_details sd ON sd.sale_id=s.id
-             WHERE si.is_deleted=0 
+             LEFT JOIN sale_details sd ON sd.sale_item_id=si.id
+             LEFT JOIN sales s ON s.id=sd.sale_id AND s.is_deleted=0
+             WHERE si.is_deleted=0 AND (sd.id IS NULL OR s.id IS NOT NULL)
              GROUP BY si.id, si.sort_order, si.name
              ORDER BY total_quantity DESC"
         );
@@ -167,9 +167,9 @@ class ItemController {
                     COALESCE(SUM(sd.quantity), 0) as total_quantity,
                     COALESCE(SUM(sd.subtotal), 0) as total_amount
              FROM sale_items si 
-             LEFT JOIN sales s ON s.sale_item_id=si.id AND s.is_deleted=0
-             LEFT JOIN sale_details sd ON sd.sale_id=s.id
-             WHERE si.is_deleted=0 
+             LEFT JOIN sale_details sd ON sd.sale_item_id=si.id
+             LEFT JOIN sales s ON s.id=sd.sale_id AND s.is_deleted=0
+             WHERE si.is_deleted=0 AND (sd.id IS NULL OR s.id IS NOT NULL)
              GROUP BY si.id, si.sort_order, si.name
              ORDER BY total_amount DESC"
         );

@@ -25,7 +25,8 @@ class SalesController {
             "SELECT s.*, c.name as company_name,
                     u.name as user_name,
                     COALESCE((SELECT SUM(p2.total_amount) FROM purchases p2 WHERE p2.sale_id=s.id AND p2.is_deleted=0),0) as purchase_total,
-                    fi.name as first_item_name, fi.sort_order as first_item_sort
+                    fi.name as first_item_name, fi.sort_order as first_item_sort,
+                    (SELECT COUNT(*) FROM sale_details sd2 WHERE sd2.sale_id=s.id) as detail_count
              FROM sales s 
              LEFT JOIN companies c ON s.company_id=c.id
              LEFT JOIN users u ON s.user_id=u.id
@@ -346,7 +347,8 @@ class SalesController {
         $sales = $db->fetchAll(
             "SELECT s.sale_number, s.sale_date, c.name as company_name, s.total_amount, s.vat_amount, 
                     COALESCE((SELECT SUM(p.total_amount) FROM purchases p WHERE p.sale_id=s.id AND p.is_deleted=0),0) as purchase_total,
-                    fi.sort_order as first_item_sort, fi.name as first_item_name
+                    fi.sort_order as first_item_sort, fi.name as first_item_name,
+                    (SELECT COUNT(*) FROM sale_details sd2 WHERE sd2.sale_id=s.id) as detail_count
              FROM sales s 
              LEFT JOIN companies c ON s.company_id=c.id 
              LEFT JOIN sale_details sd_first ON sd_first.sale_id=s.id AND sd_first.sort_order=0
@@ -363,6 +365,8 @@ class SalesController {
         foreach ($sales as $s) {
             $profit = $s['total_amount'] - $s['purchase_total'];
             $itemCode = $s['first_item_sort'] ? $s['first_item_sort'] . '.' . $s['first_item_name'] : '-';
+            $extra = (int)$s['detail_count'] - 1;
+            if ($extra > 0) $itemCode .= ' 외 ' . $extra . '건';
             $rows[] = [
                 $s['sale_number'], $s['sale_date'], $s['company_name'],
                 $itemCode,

@@ -70,7 +70,16 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         <td><strong><?= e($s['sale_number']) ?></strong></td>
                         <td><?= e($s['sale_date']) ?></td>
                         <td><?= e($s['company_name']) ?></td>
-                        <td><?= $s['first_item_sort'] ? e($s['first_item_sort'] . '.' . $s['first_item_name']) : '-' ?></td>
+                        <td><?php
+                            if ($s['first_item_sort']) {
+                                $code = e($s['first_item_sort'] . '.' . $s['first_item_name']);
+                                $extra = (int)$s['detail_count'] - 1;
+                                echo $code;
+                                if ($extra > 0) echo '<span style="color:var(--text-muted);font-size:12px;"> 외 ' . $extra . '건</span>';
+                            } else {
+                                echo '-';
+                            }
+                        ?></td>
                         <td class="money"><?= formatMoney($s['total_amount']) ?></td>
                         <td class="money"><?= formatMoney($s['purchase_total']) ?></td>
                         <td class="money <?= $profit >= 0 ? 'text-success' : 'text-danger' ?>"><?= formatMoney($profit) ?></td>
