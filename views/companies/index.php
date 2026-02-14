@@ -23,7 +23,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-building" style="color:var(--accent)"></i> 매출 업체 목록</h3>
+        <h3><i class="fas fa-building" style="color:var(--cyan-accent)"></i> 매출 업체 목록</h3>
         <form method="GET" class="d-flex gap-2">
             <input type="hidden" name="page" value="companies">
             <input type="text" name="search" class="form-control" placeholder="업체명/담당자/연락처 검색" value="<?= e($search) ?>" style="width:220px;">

@@ -9,7 +9,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-users-cog" style="color:var(--accent)"></i> 사용자 목록</h3>
+        <h3><i class="fas fa-users-cog" style="color:var(--cyan-accent)"></i> 사용자 목록</h3>
         <button class="btn btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> 사용자 등록</button>
     </div>
     <div class="card-body">

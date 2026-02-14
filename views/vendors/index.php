@@ -8,7 +8,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <?php endif; ?>
 
 <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);">
-    <div class="stat-card" style="border-left:4px solid #E65100;">
+    <div class="stat-card warning">
         <div class="stat-label"><i class="fas fa-truck"></i> 등록된 총 매입 업체수</div>
         <div class="stat-value"><?= number_format($totalCount) ?></div>
         <div class="stat-sub">개사</div>
@@ -23,7 +23,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-truck" style="color:#E65100"></i> 매입 업체 목록</h3>
+        <h3><i class="fas fa-truck" style="color:var(--amber-glow)"></i> 매입 업체 목록</h3>
         <form method="GET" class="d-flex gap-2">
             <input type="hidden" name="page" value="vendors">
             <input type="text" name="search" class="form-control" placeholder="업체명/담당자/연락처 검색" value="<?= e($search) ?>" style="width:220px;">

@@ -10,7 +10,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <!-- Create Backup -->
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-database" style="color:var(--accent)"></i> 데이터베이스 백업</h3>
+        <h3><i class="fas fa-database" style="color:var(--cyan-accent)"></i> 데이터베이스 백업</h3>
     </div>
     <div class="card-body">
         <form method="POST" action="?page=backup&action=create" class="d-flex gap-2 align-center flex-wrap">
@@ -58,8 +58,8 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <!-- Restore Modal (2-step confirmation) -->
 <div class="modal-overlay" id="restoreModal">
     <div class="modal-box" style="max-width:450px;">
-        <div class="modal-header" style="background:#FFEBEE;">
-            <h4 style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> 데이터베이스 복원 경고</h4>
+        <div class="modal-header" style="background:rgba(239,68,68,0.12);">
+            <h4 style="color:var(--rose);"><i class="fas fa-exclamation-triangle"></i> 데이터베이스 복원 경고</h4>
             <button class="modal-close" onclick="closeRestoreModal()">&times;</button>
         </div>
         <form method="POST" action="?page=backup&action=restore">

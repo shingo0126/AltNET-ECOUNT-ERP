@@ -70,7 +70,7 @@
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
     <div class="card">
         <div class="card-header">
-            <h3><i class="fas fa-chart-bar" style="color:var(--accent)"></i> <?= e($year) ?>년 매출/매입 분석</h3>
+            <h3><i class="fas fa-chart-bar" style="color:var(--cyan-accent)"></i> <?= e($year) ?>년 매출/매입 분석</h3>
         </div>
         <div class="card-body">
             <div class="chart-container">
@@ -80,7 +80,7 @@
     </div>
     <div class="card">
         <div class="card-header">
-            <h3><i class="fas fa-chart-area" style="color:var(--primary-dark)"></i> <?= e($year) ?>년 매출 등록 수량</h3>
+            <h3><i class="fas fa-chart-area" style="color:var(--indigo)"></i> <?= e($year) ?>년 매출 등록 수량</h3>
         </div>
         <div class="card-body">
             <div class="chart-container">
@@ -93,7 +93,7 @@
 <!-- 세금계산서 발행 요청 최근 5건 (요청 건만 표시) -->
 <div class="card" style="margin-bottom:20px;">
     <div class="card-header">
-        <h3><i class="fas fa-file-invoice" style="color:var(--accent)"></i> 세금계산서 발행 요청 (최근 5건)</h3>
+        <h3><i class="fas fa-file-invoice" style="color:var(--cyan-accent)"></i> 세금계산서 발행 요청 (최근 5건)</h3>
         <a href="?page=taxinvoice" class="btn btn-outline btn-sm"><i class="fas fa-arrow-right"></i> 전체 보기</a>
     </div>
     <div class="card-body" style="padding:12px 20px;">
@@ -125,7 +125,7 @@
                         <td class="money"><?= formatMoney($ti['total_amount']) ?>원</td>
                         <td style="text-align:center;">
                             <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;
-                                color:#2E7D4F;background:#E8F5E9;">
+                                color:var(--emerald);background:rgba(16,185,129,0.12);">
                                 요청
                             </span>
                         </td>
@@ -142,8 +142,8 @@
 <div class="card" style="margin-bottom:20px;">
     <div class="card-body" style="padding:12px 20px;">
         <div class="d-flex gap-2 flex-wrap align-center">
-            <span style="font-weight:600;color:var(--text);margin-right:8px;white-space:nowrap;">
-                <i class="fas fa-filter" style="color:var(--accent)"></i> TOP 20 조회 기간
+            <span style="font-weight:600;color:var(--text-primary);margin-right:8px;white-space:nowrap;">
+                <i class="fas fa-filter" style="color:var(--cyan-accent)"></i> TOP 20 조회 기간
             </span>
             <div class="form-group mb-0">
                 <select id="topYear" class="form-control" onchange="onTopFilterChange()">
@@ -183,7 +183,7 @@
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
     <div class="card">
         <div class="card-header">
-            <h3><i class="fas fa-building" style="color:var(--accent)"></i> 매출 업체 TOP 20</h3>
+            <h3><i class="fas fa-building" style="color:var(--cyan-accent)"></i> 매출 업체 TOP 20</h3>
             <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-outline btn-sm" onclick="toggleDetail('company-detail')"><i class="fas fa-list"></i> 상세보기</button>
                 <a id="csvCompanyLink" href="?page=dashboard&action=exportCompanies&top_year=<?= e($topYear) ?>&top_view=<?= e($topView) ?>&top_month=<?= e($topMonth) ?>&top_quarter=<?= e($topQuarter) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
@@ -213,7 +213,7 @@
     </div>
     <div class="card">
         <div class="card-header">
-            <h3><i class="fas fa-truck" style="color:#E65100"></i> 매입 업체 TOP 20</h3>
+            <h3><i class="fas fa-truck" style="color:var(--amber-glow)"></i> 매입 업체 TOP 20</h3>
             <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-outline btn-sm" onclick="toggleDetail('vendor-detail')"><i class="fas fa-list"></i> 상세보기</button>
                 <a id="csvVendorLink" href="?page=dashboard&action=exportVendors&top_year=<?= e($topYear) ?>&top_view=<?= e($topView) ?>&top_month=<?= e($topMonth) ?>&top_quarter=<?= e($topQuarter) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
@@ -256,6 +256,11 @@ $countAmounts = json_encode(array_values($chartCounts));
 $viewTypeJs = $viewType;
 
 $pageScript = <<<JS
+// Chart.js dark theme defaults
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.plugins.legend.labels.color = '#94a3b8';
+
 const fmtKRW = v => new Intl.NumberFormat('ko-KR').format(v) + '원';
 const fmtMoney = v => new Intl.NumberFormat('ko-KR').format(parseInt(v));
 
@@ -294,16 +299,16 @@ new Chart(document.getElementById('salesChart'), {
             {
                 label: '매출액',
                 data: '$viewTypeJs' === 'quarterly' ? $quarterlyAmounts : $monthlyAmounts,
-                backgroundColor: 'rgba(0,119,182,.7)',
-                borderColor: '#0077B6',
+                backgroundColor: 'rgba(37,99,235,.6)',
+                borderColor: '#3b82f6',
                 borderWidth: 1,
                 borderRadius: 4
             },
             {
                 label: '매입액',
                 data: '$viewTypeJs' === 'quarterly' ? $quarterlyPurchaseAmounts : $monthlyPurchaseAmounts,
-                backgroundColor: 'rgba(230,81,0,.55)',
-                borderColor: '#E65100',
+                backgroundColor: 'rgba(245,158,11,.55)',
+                borderColor: '#f59e0b',
                 borderWidth: 1,
                 borderRadius: 4
             }
@@ -327,9 +332,9 @@ new Chart(document.getElementById('countChart'), {
         datasets: [{
             label: '등록 수',
             data: $countAmounts,
-            borderColor: '#7FA882',
-            backgroundColor: 'rgba(167,196,170,.2)',
-            fill: true, tension: .3, pointRadius: 5, pointBackgroundColor: '#7FA882'
+            borderColor: '#22d3ee',
+            backgroundColor: 'rgba(34,211,238,.15)',
+            fill: true, tension: .3, pointRadius: 5, pointBackgroundColor: '#22d3ee'
         }]
     },
     options: {
@@ -348,7 +353,7 @@ function createCompanyChart(names, totals) {
     if (names.length === 0) { wrap.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><h4>데이터가 없습니다</h4></div>'; companyChart = null; return; }
     wrap.innerHTML = '<div class="chart-container tall"><canvas id="topCompaniesChart"></canvas></div>';
     companyChart = new Chart(document.getElementById('topCompaniesChart'), {
-        type: 'bar', data: { labels: names, datasets: [{ label: '매출액', data: totals, backgroundColor: 'rgba(0,119,182,.65)', borderRadius: 3 }] },
+        type: 'bar', data: { labels: names, datasets: [{ label: '매출액', data: totals, backgroundColor: 'rgba(37,99,235,.55)', borderRadius: 3 }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { tooltip: tooltipHorizontal, legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } } }
     });
 }
@@ -357,7 +362,7 @@ function createVendorChart(names, totals) {
     if (names.length === 0) { wrap.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><h4>데이터가 없습니다</h4></div>'; vendorChart = null; return; }
     wrap.innerHTML = '<div class="chart-container tall"><canvas id="topVendorsChart"></canvas></div>';
     vendorChart = new Chart(document.getElementById('topVendorsChart'), {
-        type: 'bar', data: { labels: names, datasets: [{ label: '매입액', data: totals, backgroundColor: 'rgba(230,81,0,.6)', borderRadius: 3 }] },
+        type: 'bar', data: { labels: names, datasets: [{ label: '매입액', data: totals, backgroundColor: 'rgba(245,158,11,.55)', borderRadius: 3 }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { tooltip: tooltipHorizontal, legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } } }
     });
 }

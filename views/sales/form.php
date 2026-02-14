@@ -16,7 +16,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">매출번호</label>
-                        <input type="text" name="sale_number" class="form-control" value="<?= e($saleNumber) ?>" readonly style="background:#f5f5f5;">
+                        <input type="text" name="sale_number" class="form-control" value="<?= e($saleNumber) ?>" readonly style="background:rgba(255,255,255,0.02);">
                     </div>
                     <div class="form-group">
                         <label class="form-label">매출일자</label>
@@ -73,7 +73,7 @@
                 </div>
                 <button type="button" class="btn btn-outline btn-sm" onclick="addSaleLine()"><i class="fas fa-plus"></i> 제품 추가</button>
                 
-                <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
+                <div style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
                     <div class="total-row">
                         <span class="total-label">매출 총액</span>
                         <span class="total-value" id="sale-total-display">0</span>
@@ -97,9 +97,9 @@
             <div class="sale-section-body" id="purchase-blocks">
                 <?php if (!empty($purchases)): ?>
                     <?php foreach ($purchases as $pi => $p): ?>
-                    <div class="purchase-block" style="border:1px solid var(--border-light);border-radius:6px;padding:12px;margin-bottom:12px;background:#FFFAF0;">
+                    <div class="purchase-block" style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:12px;margin-bottom:12px;background:rgba(245,158,11,0.04);">
                         <div class="d-flex justify-between align-center mb-1">
-                            <strong style="color:#E65100;font-size:13px;">매입 #<?= $pi + 1 ?></strong>
+                            <strong style="color:var(--amber-glow);font-size:13px;">매입 #<?= $pi + 1 ?></strong>
                             <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.purchase-block').remove();calcPurchaseTotals();">삭제</button>
                         </div>
                         <div class="form-row">
@@ -134,7 +134,7 @@
                         <input type="hidden" name="p_vat[]" class="p-vat-input" value="<?= $p['vat_amount'] ?>">
                         <div class="total-row" style="margin-top:8px;">
                             <span class="total-label">매입 소계</span>
-                            <span class="p-block-total" style="font-weight:700;color:#E65100;"><?= formatMoney($p['total_amount']) ?></span>
+                            <span class="p-block-total" style="font-weight:700;color:var(--amber-glow);"><?= formatMoney($p['total_amount']) ?></span>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -148,10 +148,10 @@
             </div>
             
             <div style="padding:0 16px 16px;">
-                <div style="border-top:2px solid #E65100;padding-top:12px;">
+                <div style="border-top:2px solid var(--amber-glow);padding-top:12px;">
                     <div class="total-row">
                         <span class="total-label">매입 총액</span>
-                        <span class="total-value" id="purchase-total-display" style="color:#E65100;">0</span>
+                        <span class="total-value" id="purchase-total-display" style="color:var(--amber-glow);">0</span>
                     </div>
                     <div class="total-row" style="font-size:smaller;">
                         <span class="total-label">부가세 (10%)</span>
@@ -170,8 +170,8 @@
                 <div class="profit-value" id="profit-sale">0</div>
             </div>
             <div>
-                <div class="profit-label" style="color:#E65100;"><i class="fas fa-shopping-cart"></i> 매입 총액</div>
-                <div class="profit-value" id="profit-purchase" style="color:#E65100;">0</div>
+                <div class="profit-label" style="color:var(--amber-glow);"><i class="fas fa-shopping-cart"></i> 매입 총액</div>
+                <div class="profit-value" id="profit-purchase" style="-webkit-text-fill-color:var(--amber-glow);color:var(--amber-glow);">0</div>
             </div>
             <div>
                 <div class="profit-label"><i class="fas fa-coins"></i> 영업이익</div>
@@ -291,9 +291,9 @@ function addPurchaseBlock() {
     var opts = '<option value="">-- 선택 --</option>';
     vendorsData.forEach(function(v) { opts += '<option value="'+v.id+'">'+v.name+'</option>'; });
     
-    var html = '<div class="purchase-block" style="border:1px solid var(--border-light);border-radius:6px;padding:12px;margin-bottom:12px;background:#FFFAF0;">' +
+    var html = '<div class="purchase-block" style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:12px;margin-bottom:12px;background:rgba(245,158,11,0.04);">' +
         '<div class="d-flex justify-between align-center mb-1">' +
-        '<strong style="color:#E65100;font-size:13px;">매입 #' + (purchaseIdx+1) + '</strong>' +
+        '<strong style="color:var(--amber-glow);font-size:13px;">매입 #' + (purchaseIdx+1) + '</strong>' +
         '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\\'.purchase-block\\').remove();calcPurchaseTotals();">삭제</button></div>' +
         '<div class="form-row">' +
         '<div class="form-group"><label class="form-label">매입일자</label><input type="text" name="p_date[]" class="form-control datepicker" value="' + (document.getElementById('sale_date').value || new Date().toISOString().slice(0,10)) + '"></div>' +
@@ -310,7 +310,7 @@ function addPurchaseBlock() {
         '<button type="button" class="btn btn-outline btn-sm" onclick="addPurchaseLine(this,'+purchaseIdx+')"><i class="fas fa-plus"></i> 제품추가</button>' +
         '<input type="hidden" name="p_total[]" class="p-total-input" value="0">' +
         '<input type="hidden" name="p_vat[]" class="p-vat-input" value="0">' +
-        '<div class="total-row" style="margin-top:8px;"><span class="total-label">매입 소계</span><span class="p-block-total" style="font-weight:700;color:#E65100;">0</span></div>' +
+        '<div class="total-row" style="margin-top:8px;"><span class="total-label">매입 소계</span><span class="p-block-total" style="font-weight:700;color:var(--amber-glow);">0</span></div>' +
         '</div>';
     
     document.getElementById('purchase-blocks').insertAdjacentHTML('beforeend', html);

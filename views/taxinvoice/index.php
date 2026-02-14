@@ -1,7 +1,7 @@
 <?php
 $statusLabels = ['requested' => '요청', 'pending' => '보류', 'completed' => '완료'];
-$statusColors = ['requested' => '#2E7D4F', 'pending' => '#E89B23', 'completed' => '#0077B6'];
-$statusBg     = ['requested' => '#E8F5E9', 'pending' => '#FFF3E0', 'completed' => '#E0F2FE'];
+$statusColors = ['requested' => '#22d3ee', 'pending' => '#f59e0b', 'completed' => '#3b82f6'];
+$statusBg     = ['requested' => 'rgba(34,211,238,0.12)', 'pending' => 'rgba(245,158,11,0.12)', 'completed' => 'rgba(59,130,246,0.12)'];
 $csrfToken = CSRF::generate();
 $flashMsg = Session::get('flash_message');
 $flashType = Session::get('flash_type', 'success');
@@ -17,8 +17,8 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 
 <!-- 상단: 제목 + 등록 버튼 -->
 <div class="d-flex justify-between align-center mb-2">
-    <h2 style="font-size:20px;font-weight:700;color:var(--text);margin:0;">
-        <i class="fas fa-file-invoice" style="color:var(--accent);"></i> 세금계산서 발행 요청 관리
+    <h2 style="font-size:20px;font-weight:700;color:var(--text-primary);margin:0;">
+        <i class="fas fa-file-invoice" style="color:var(--cyan-accent);"></i> 세금계산서 발행 요청 관리
     </h2>
     <button class="btn btn-primary" onclick="openCreatePopup()">
         <i class="fas fa-plus"></i> 발행 요청 등록
@@ -27,19 +27,19 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 
 <!-- 집계 카드 -->
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
-    <div class="stat-card" style="border-left:4px solid #2E7D4F;">
-        <div class="stat-label"><i class="fas fa-paper-plane" style="color:#2E7D4F;"></i> 발행 요청</div>
-        <div class="stat-value" style="color:#2E7D4F;"><?= number_format($reqOnlyCount) ?></div>
+    <div class="stat-card success">
+        <div class="stat-label"><i class="fas fa-paper-plane" style="color:var(--emerald);"></i> 발행 요청</div>
+        <div class="stat-value"><?= number_format($reqOnlyCount) ?></div>
         <div class="stat-sub">건</div>
     </div>
-    <div class="stat-card" style="border-left:4px solid #E89B23;">
-        <div class="stat-label"><i class="fas fa-pause-circle" style="color:#E89B23;"></i> 보류</div>
-        <div class="stat-value" style="color:#E89B23;"><?= number_format($pendingCount) ?></div>
+    <div class="stat-card warning">
+        <div class="stat-label"><i class="fas fa-pause-circle" style="color:var(--amber-glow);"></i> 보류</div>
+        <div class="stat-value"><?= number_format($pendingCount) ?></div>
         <div class="stat-sub">건</div>
     </div>
-    <div class="stat-card" style="border-left:4px solid #0077B6;">
-        <div class="stat-label"><i class="fas fa-check-circle" style="color:#0077B6;"></i> 발행 완료</div>
-        <div class="stat-value" style="color:#0077B6;"><?= number_format($compCount) ?></div>
+    <div class="stat-card accent">
+        <div class="stat-label"><i class="fas fa-check-circle" style="color:var(--cyan-accent);"></i> 발행 완료</div>
+        <div class="stat-value"><?= number_format($compCount) ?></div>
         <div class="stat-sub">건</div>
     </div>
 </div>
@@ -47,7 +47,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <!-- ===== 발행 요청 리스트 ===== -->
 <div class="card mb-2">
     <div class="card-header">
-        <h3><i class="fas fa-list-alt" style="color:#2E7D4F;"></i> 발행 요청 건 (요청/보류)</h3>
+        <h3><i class="fas fa-list-alt" style="color:var(--emerald);"></i> 발행 요청 건 (요청/보류)</h3>
         <a href="?page=taxinvoice&action=exportRequested" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
     </div>
     <div class="card-body">
@@ -84,7 +84,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         </td>
                         <td>
                             <?php if ($r['status'] === 'pending' && !empty($r['pending_reason'])): ?>
-                            <div style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#E89B23;cursor:help;"
+                            <div style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--amber-glow);cursor:help;"
                                  title="<?= e($r['pending_reason']) ?>">
                                 <?= e($r['pending_reason']) ?>
                             </div>
@@ -125,7 +125,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <!-- ===== 발행 완료 리스트 ===== -->
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-check-double" style="color:#0077B6;"></i> 발행 완료 건</h3>
+        <h3><i class="fas fa-check-double" style="color:var(--cyan-accent);"></i> 발행 완료 건</h3>
         <a href="?page=taxinvoice&action=exportCompleted" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
     </div>
     <div class="card-body">
@@ -155,7 +155,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         <td class="money"><?= formatMoney($r['total_amount']) ?>원</td>
                         <td style="text-align:center;">
                             <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;
-                                color:#0077B6;background:#E0F2FE;">완료</span>
+                                color:#3b82f6;background:rgba(59,130,246,0.12);">완료</span>
                         </td>
                         <?php if ($isAdmin): ?>
                         <td style="text-align:center;white-space:nowrap;">
@@ -186,35 +186,34 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 </div>
 
 <!-- ===== 팝업 오버레이 ===== -->
-<div id="tiPopupOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:9998;"></div>
+<div id="tiPopupOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;"></div>
 
-<!-- ===== 발행 요청 등록/수정/보기 팝업 ===== -->
+<!-- ===== 발행 요청 등록/수정/보기 팝업 (No Scrollbar: compact layout) ===== -->
 <div id="tiPopup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:780px;max-width:95vw;max-height:90vh;overflow-y:auto;background:#fff;border-radius:12px;
-    box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:9999;">
+    width:780px;max-width:95vw;overflow:visible;z-index:9999;">
     <form method="POST" action="?page=taxinvoice&action=save" id="tiForm">
         <?= CSRF::field() ?>
         <input type="hidden" name="invoice_id" id="ti_invoice_id" value="">
         
         <!-- 팝업 헤더 -->
-        <div style="padding:20px 24px;border-bottom:2px solid var(--accent);display:flex;justify-content:space-between;align-items:center;">
-            <h3 id="tiPopupTitle" style="margin:0;font-size:18px;font-weight:700;color:var(--text);">
-                <i class="fas fa-file-invoice" style="color:var(--accent);"></i> 세금계산서 발행 요청 등록
+        <div style="padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">
+            <h3 id="tiPopupTitle" style="margin:0;font-size:16px;font-weight:700;color:var(--text-primary);">
+                <i class="fas fa-file-invoice" style="color:var(--cyan-accent);"></i> 세금계산서 발행 요청 등록
             </h3>
-            <button type="button" onclick="closePopup()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);padding:4px;">
+            <button type="button" onclick="closePopup()" class="modal-close">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         
-        <!-- 팝업 본문 -->
-        <div style="padding:20px 24px;">
-            <!-- 요청일자 / 업체명 -->
-            <div class="form-row">
-                <div class="form-group">
+        <!-- 팝업 본문 (compact padding to avoid scrollbar) -->
+        <div style="padding:14px 24px 10px;">
+            <!-- 요청일자 / 업체명 / 프로젝트 — 3열 그리드로 압축 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+                <div class="form-group mb-0">
                     <label class="form-label">요청일자 <span class="text-danger">*</span></label>
                     <input type="text" name="request_date" id="ti_request_date" class="form-control ti-datepicker" required>
                 </div>
-                <div class="form-group">
+                <div class="form-group mb-0">
                     <label class="form-label">업체명 <span class="text-danger">*</span></label>
                     <select name="company_id" id="ti_company_id" class="form-control" required>
                         <option value="">-- 매출업체 선택 --</option>
@@ -223,17 +222,15 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         <?php endforeach; ?>
                     </select>
                 </div>
-            </div>
-            
-            <!-- 프로젝트 -->
-            <div class="form-group">
-                <label class="form-label">프로젝트</label>
-                <input type="text" name="project_name" id="ti_project_name" class="form-control" placeholder="프로젝트명 직접 입력">
+                <div class="form-group mb-0">
+                    <label class="form-label">프로젝트</label>
+                    <input type="text" name="project_name" id="ti_project_name" class="form-control" placeholder="프로젝트명 직접 입력">
+                </div>
             </div>
             
             <!-- 제품 라인 아이템 (다중) -->
-            <div class="form-label" style="margin-top:12px;margin-bottom:6px;">
-                <i class="fas fa-box" style="color:var(--accent);"></i> 제품 내역
+            <div class="form-label" style="margin-bottom:4px;">
+                <i class="fas fa-box" style="color:var(--cyan-accent);"></i> 제품 내역
             </div>
             <div class="ti-line-item-header">
                 <span>제품명</span><span>수량</span><span>단가</span><span>소계</span><span></span>
@@ -247,50 +244,46 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                     <button type="button" class="btn-remove" onclick="removeTiLine(this)"><i class="fas fa-times"></i></button>
                 </div>
             </div>
-            <button type="button" class="btn btn-outline btn-sm" id="tiAddLineBtn" onclick="addTiLine()" style="margin-top:6px;">
+            <button type="button" class="btn btn-outline btn-sm" id="tiAddLineBtn" onclick="addTiLine()" style="margin-top:4px;">
                 <i class="fas fa-plus"></i> 제품 추가
             </button>
             
-            <!-- 총액 / 부가세 -->
-            <div style="margin-top:16px;border-top:2px solid var(--border);padding-top:12px;">
-                <div class="total-row">
-                    <span class="total-label"><strong>총액</strong></span>
-                    <span class="total-value" id="ti-total-display" style="font-size:20px;">0</span>
-                </div>
+            <!-- 총액 / 부가세 — 인라인으로 압축 -->
+            <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;display:flex;align-items:center;justify-content:flex-end;gap:20px;">
+                <span style="font-size:12px;color:var(--text-muted);">총액</span>
+                <span class="total-value" id="ti-total-display" style="font-size:18px;">0</span>
                 <input type="hidden" name="total_amount" id="ti_total_amount" value="0">
-                <div class="total-row" style="margin-top:4px;">
-                    <span class="total-label">부가세 (10%)</span>
-                    <span class="total-value" id="ti-vat-display" style="font-size:14px;color:var(--text-light);">0</span>
-                </div>
+                <span style="font-size:12px;color:var(--text-muted);">VAT (10%)</span>
+                <span class="total-value" id="ti-vat-display" style="font-size:14px;">0</span>
                 <input type="hidden" name="vat_amount" id="ti_vat_amount" value="0">
             </div>
             
-            <!-- 처리 상태 -->
-            <div class="form-group" style="margin-top:16px;">
-                <label class="form-label">처리 상태</label>
-                <div class="d-flex gap-2">
-                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 16px;border:2px solid #2E7D4F;border-radius:8px;font-weight:600;color:#2E7D4F;background:#E8F5E9;">
-                        <input type="radio" name="status" value="requested" checked onchange="togglePendingReason()"> 요청
-                    </label>
-                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 16px;border:2px solid #E89B23;border-radius:8px;font-weight:600;color:#E89B23;background:#FFF3E0;">
-                        <input type="radio" name="status" value="pending" onchange="togglePendingReason()"> 보류
-                    </label>
-                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 16px;border:2px solid #0077B6;border-radius:8px;font-weight:600;color:#0077B6;background:#E0F2FE;">
-                        <input type="radio" name="status" value="completed" onchange="togglePendingReason()"> 완료
-                    </label>
+            <!-- 처리 상태 + 보류 사유 — 한 줄로 압축 -->
+            <div style="margin-top:10px;display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+                <div>
+                    <label class="form-label" style="margin-bottom:4px;">처리 상태</label>
+                    <div class="d-flex gap-2">
+                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-weight:600;font-size:12px;color:var(--emerald);background:rgba(16,185,129,0.1);">
+                            <input type="radio" name="status" value="requested" checked onchange="togglePendingReason()"> 요청
+                        </label>
+                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-weight:600;font-size:12px;color:var(--amber-glow);background:rgba(245,158,11,0.1);">
+                            <input type="radio" name="status" value="pending" onchange="togglePendingReason()"> 보류
+                        </label>
+                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;border:1px solid rgba(34,211,238,0.3);border-radius:8px;font-weight:600;font-size:12px;color:var(--cyan-accent);background:rgba(34,211,238,0.1);">
+                            <input type="radio" name="status" value="completed" onchange="togglePendingReason()"> 완료
+                        </label>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- 보류 사유 (보류 선택시만 활성화) -->
-            <div class="form-group" id="pendingReasonWrap" style="display:none;margin-top:8px;">
-                <label class="form-label" style="color:#E89B23;"><i class="fas fa-exclamation-triangle" style="color:#E89B23;"></i> 보류 사유 <span class="text-danger">*</span></label>
-                <textarea name="pending_reason" id="ti_pending_reason" class="form-control" rows="3" 
-                    placeholder="보류 사유를 입력하세요..." style="border-color:#E89B23;resize:vertical;"></textarea>
+                <div class="form-group mb-0" id="pendingReasonWrap" style="display:none;flex:1;min-width:200px;">
+                    <label class="form-label" style="color:var(--amber-glow);margin-bottom:4px;"><i class="fas fa-exclamation-triangle" style="color:var(--amber-glow);"></i> 보류 사유 <span class="text-danger">*</span></label>
+                    <textarea name="pending_reason" id="ti_pending_reason" class="form-control" rows="2" 
+                        placeholder="보류 사유를 입력하세요..." style="border-color:rgba(245,158,11,0.3);resize:vertical;"></textarea>
+                </div>
             </div>
         </div>
         
         <!-- 팝업 하단 버튼 -->
-        <div id="tiPopupFooter" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#FAFAFA;border-radius:0 0 12px 12px;">
+        <div id="tiPopupFooter" style="padding:12px 24px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:flex-end;gap:8px;background:rgba(255,255,255,0.02);border-radius:0 0 16px 16px;">
             <button type="button" class="btn btn-outline" id="tiCancelBtn" onclick="closePopup()"><i class="fas fa-times"></i> 취소</button>
             <button type="submit" class="btn btn-primary" id="tiSubmitBtn"><i class="fas fa-save"></i> 등록</button>
             <button type="button" class="btn btn-outline" id="tiCloseBtn" onclick="closePopup()" style="display:none;"><i class="fas fa-times"></i> 닫기</button>
@@ -322,7 +315,7 @@ function togglePendingReason() {
 function openCreatePopup() {
     isViewMode = false;
     document.getElementById('ti_invoice_id').value = '';
-    document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-file-invoice" style="color:var(--accent);"></i> 세금계산서 발행 요청 등록';
+    document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-file-invoice" style="color:var(--cyan-accent);"></i> 세금계산서 발행 요청 등록';
     document.getElementById('tiSubmitBtn').innerHTML = '<i class="fas fa-save"></i> 등록';
     document.getElementById('tiForm').reset();
     
@@ -367,9 +360,9 @@ function loadInvoiceData(id, readOnly) {
             document.getElementById('ti_invoice_id').value = inv.id;
             
             if (readOnly) {
-                document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-eye" style="color:var(--accent);"></i> 세금계산서 요청 상세보기 (#' + inv.id + ')';
+                document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-eye" style="color:var(--cyan-accent);"></i> 세금계산서 요청 상세보기 (#' + inv.id + ')';
             } else {
-                document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-edit" style="color:var(--accent);"></i> 세금계산서 요청 수정 (#' + inv.id + ')';
+                document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-edit" style="color:var(--cyan-accent);"></i> 세금계산서 요청 수정 (#' + inv.id + ')';
                 document.getElementById('tiSubmitBtn').innerHTML = '<i class="fas fa-save"></i> 수정 저장';
             }
             

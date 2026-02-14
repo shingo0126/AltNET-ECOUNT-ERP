@@ -11,7 +11,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-file-invoice-dollar" style="color:var(--accent)"></i> 매출/매입 내역</h3>
+        <h3><i class="fas fa-file-invoice-dollar" style="color:var(--cyan-accent)"></i> 매출/매입 내역</h3>
         <div class="d-flex gap-2 flex-wrap">
             <a href="?page=sales&action=create" class="btn btn-primary"><i class="fas fa-plus"></i> 매출등록</a>
             <a href="?page=sales&action=export&year=<?= e($year) ?>&month=<?= e($month) ?>" class="btn btn-success"><i class="fas fa-file-csv"></i> CSV 다운로드</a>

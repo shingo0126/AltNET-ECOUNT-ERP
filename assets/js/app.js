@@ -182,10 +182,32 @@ function ajaxPost(url, data) {
         .then(r => r.json());
 }
 
+// ===== Glassmorphism 2.0: Card Light Tracking =====
+function initCardLightTracking() {
+    document.querySelectorAll('.card').forEach(function(card) {
+        // Skip if already has light element
+        if (card.querySelector('.card-light')) return;
+        var light = document.createElement('div');
+        light.className = 'card-light';
+        card.insertBefore(light, card.firstChild);
+
+        card.addEventListener('mousemove', function(e) {
+            var rect = card.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            light.style.background = 'radial-gradient(350px circle at ' + x + 'px ' + y + 'px, rgba(34,211,238,0.04), transparent 60%)';
+        });
+        card.addEventListener('mouseleave', function() {
+            light.style.background = '';
+        });
+    });
+}
+
 // ===== Init on DOM Ready =====
 document.addEventListener('DOMContentLoaded', function() {
     initMoneyInputs();
     initPhoneInputs();
     initSidebar();
     initSessionTimer();
+    initCardLightTracking();
 });

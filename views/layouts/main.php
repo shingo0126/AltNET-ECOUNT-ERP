@@ -30,6 +30,11 @@ $user = Session::getUser();
     </style>
 </head>
 <body>
+    <!-- Glassmorphism 2.0: Background Blobs -->
+    <div class="bg-blob b1"></div>
+    <div class="bg-blob b2"></div>
+    <div class="bg-blob b3"></div>
+
     <div class="app-wrapper">
         <!-- Sidebar Overlay (mobile) -->
         <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -63,7 +68,7 @@ $user = Session::getUser();
             <h3>세션 만료 경고</h3>
             <p>보안을 위해 곧 자동 로그아웃됩니다.</p>
             <div class="sw-time"><span id="session-countdown">5:00</span></div>
-            <p style="font-size:12px;color:#999;">세션을 유지하시겠습니까?</p>
+            <p style="font-size:12px;color:var(--text-muted);">세션을 유지하시겠습니까?</p>
             <div class="sw-actions">
                 <button class="btn btn-outline" id="session-logout"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
                 <button class="btn btn-primary" id="session-extend"><i class="fas fa-refresh"></i> 세션 유지</button>

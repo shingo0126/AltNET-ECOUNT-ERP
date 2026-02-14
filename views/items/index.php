@@ -23,7 +23,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 
 <!-- Item List -->
 <div class="card">
-    <div class="card-header"><h3><i class="fas fa-tags" style="color:var(--primary-dark)"></i> 판매 제품 코드 목록</h3></div>
+    <div class="card-header"><h3><i class="fas fa-tags" style="color:var(--indigo)"></i> 판매 제품 코드 목록</h3></div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="data-table">
@@ -63,7 +63,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <!-- TOP 30 By Quantity -->
 <div class="card mt-3">
     <div class="card-header">
-        <h3><i class="fas fa-sort-amount-down" style="color:var(--primary-dark)"></i> 판매 수량 TOP 30</h3>
+        <h3><i class="fas fa-sort-amount-down" style="color:var(--indigo)"></i> 판매 수량 TOP 30</h3>
         <div class="d-flex gap-2">
             <button class="btn btn-outline btn-sm" onclick="toggleDetail('qty-detail')"><i class="fas fa-list"></i> 상세보기</button>
             <a href="?page=items&action=exportStatsQty" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
@@ -100,7 +100,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <!-- TOP 30 By Amount -->
 <div class="card mt-3">
     <div class="card-header">
-        <h3><i class="fas fa-won-sign" style="color:var(--accent)"></i> 매출 금액 TOP 30</h3>
+        <h3><i class="fas fa-won-sign" style="color:var(--cyan-accent)"></i> 매출 금액 TOP 30</h3>
         <div class="d-flex gap-2">
             <button class="btn btn-outline btn-sm" onclick="toggleDetail('amt-detail')"><i class="fas fa-list"></i> 상세보기</button>
             <a href="?page=items&action=exportStatsAmt" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
@@ -185,6 +185,10 @@ function toggleDetail(id) {
 
 var fmtKRW = function(v) { return new Intl.NumberFormat('ko-KR').format(v) + '원'; };
 
+// Chart.js dark theme
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+
 // TOP 30 Quantity Chart
 var qtyEl = document.getElementById('top30QtyChart');
 if (qtyEl) {
@@ -192,7 +196,7 @@ if (qtyEl) {
         type: 'bar',
         data: {
             labels: $qtyNames,
-            datasets: [{ label: '판매 수량', data: $qtyValues, backgroundColor: 'rgba(127,168,130,.7)', borderRadius: 3 }]
+            datasets: [{ label: '판매 수량', data: $qtyValues, backgroundColor: 'rgba(99,102,241,.6)', borderRadius: 3 }]
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
@@ -212,7 +216,7 @@ if (amtEl) {
         type: 'bar',
         data: {
             labels: $amtNames,
-            datasets: [{ label: '매출 금액', data: $amtValues, backgroundColor: 'rgba(0,119,182,.65)', borderRadius: 3 }]
+            datasets: [{ label: '매출 금액', data: $amtValues, backgroundColor: 'rgba(37,99,235,.55)', borderRadius: 3 }]
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,

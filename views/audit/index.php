@@ -1,6 +1,6 @@
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-history" style="color:var(--accent)"></i> 감사 로그</h3>
+        <h3><i class="fas fa-history" style="color:var(--cyan-accent)"></i> 감사 로그</h3>
         <a href="?page=audit&action=export" class="btn btn-success"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
     </div>
     <div class="card-body">
@@ -42,7 +42,7 @@
                         <td><strong><?= e($l['username']) ?></strong></td>
                         <td>
                             <?php 
-                            $colors = ['INSERT'=>'success','UPDATE'=>'accent','DELETE'=>'danger','LOGIN'=>'primary-dark','LOGOUT'=>'text-muted','BACKUP'=>'warning','RESTORE'=>'danger','EXPORT'=>'accent'];
+                            $colors = ['INSERT'=>'emerald','UPDATE'=>'cyan-accent','DELETE'=>'rose','LOGIN'=>'blue-primary','LOGOUT'=>'text-muted','BACKUP'=>'amber-glow','RESTORE'=>'rose','EXPORT'=>'cyan-accent'];
                             $c = $colors[$l['action']] ?? 'text';
                             ?>
                             <span style="color:var(--<?= $c ?>);font-weight:700;font-size:12px;"><?= e($l['action']) ?></span>

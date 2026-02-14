@@ -47,7 +47,7 @@
     <div class="sidebar-user">
         <div>
             <span class="user-name"><i class="fas fa-user-circle"></i> <?= e(Session::get('user_name', '')) ?></span>
-            <span class="badge badge-<?= e(Session::get('user_role', 'user')) ?>" style="margin-left:6px;"><?= e(strtoupper(Session::get('user_role', ''))) ?></span>
+            <span class="badge badge-<?= e(Session::get('user_role', 'user')) ?>"><?= e(strtoupper(Session::get('user_role', ''))) ?></span>
         </div>
         <a href="?page=logout" class="logout-btn" title="로그아웃"><i class="fas fa-sign-out-alt"></i></a>
     </div>
