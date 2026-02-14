@@ -25,8 +25,8 @@ class ItemController {
              ORDER BY si.sort_order"
         );
         
-        // TOP 30 by quantity
-        $top30Qty = $db->fetchAll(
+        // TOP 15 by quantity
+        $top15Qty = $db->fetchAll(
             "SELECT si.id, si.sort_order, si.name, 
                     COALESCE(SUM(sd.quantity), 0) as total_quantity,
                     COALESCE(SUM(sd.subtotal), 0) as total_amount
@@ -36,11 +36,11 @@ class ItemController {
              WHERE si.is_deleted=0 AND (sd.id IS NULL OR s.id IS NOT NULL)
              GROUP BY si.id, si.sort_order, si.name 
              ORDER BY total_quantity DESC
-             LIMIT 30"
+             LIMIT 15"
         );
         
-        // TOP 30 by amount
-        $top30Amt = $db->fetchAll(
+        // TOP 15 by amount
+        $top15Amt = $db->fetchAll(
             "SELECT si.id, si.sort_order, si.name, 
                     COALESCE(SUM(sd.quantity), 0) as total_quantity,
                     COALESCE(SUM(sd.subtotal), 0) as total_amount
@@ -50,7 +50,7 @@ class ItemController {
              WHERE si.is_deleted=0 AND (sd.id IS NULL OR s.id IS NOT NULL)
              GROUP BY si.id, si.sort_order, si.name 
              ORDER BY total_amount DESC
-             LIMIT 30"
+             LIMIT 15"
         );
         
         // All items ranked by quantity (for detail view)

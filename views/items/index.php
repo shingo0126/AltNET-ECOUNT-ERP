@@ -75,20 +75,20 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
     </div>
 </div>
 
-<!-- TOP 30 By Quantity -->
+<!-- TOP 15 By Quantity -->
 <div class="card mt-3">
     <div class="card-header">
-        <h3><i class="fas fa-sort-amount-down" style="color:var(--indigo)"></i> 판매 수량 TOP 30</h3>
+        <h3><i class="fas fa-sort-amount-down" style="color:var(--indigo)"></i> 판매 수량 TOP 15</h3>
         <div class="d-flex gap-2">
             <button class="btn btn-outline btn-sm" onclick="toggleDetail('qty-detail')"><i class="fas fa-list"></i> 상세보기</button>
             <a href="?page=items&action=exportStatsQty" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
         </div>
     </div>
     <div class="card-body">
-        <?php if (empty($top30Qty) || array_sum(array_column($top30Qty, 'total_quantity')) == 0): ?>
+        <?php if (empty($top15Qty) || array_sum(array_column($top15Qty, 'total_quantity')) == 0): ?>
             <div class="empty-state"><i class="fas fa-chart-bar"></i><h4>판매 수량 데이터가 없습니다</h4></div>
         <?php else: ?>
-        <div class="chart-container tall"><canvas id="top30QtyChart"></canvas></div>
+        <div class="chart-container" style="height:520px;"><canvas id="top15QtyChart"></canvas></div>
         <?php endif; ?>
         
         <!-- Detail list (hidden by default) -->
@@ -112,20 +112,20 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
     </div>
 </div>
 
-<!-- TOP 30 By Amount -->
+<!-- TOP 15 By Amount -->
 <div class="card mt-3">
     <div class="card-header">
-        <h3><i class="fas fa-won-sign" style="color:var(--cyan-accent)"></i> 매출 금액 TOP 30</h3>
+        <h3><i class="fas fa-won-sign" style="color:var(--cyan-accent)"></i> 매출 금액 TOP 15</h3>
         <div class="d-flex gap-2">
             <button class="btn btn-outline btn-sm" onclick="toggleDetail('amt-detail')"><i class="fas fa-list"></i> 상세보기</button>
             <a href="?page=items&action=exportStatsAmt" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
         </div>
     </div>
     <div class="card-body">
-        <?php if (empty($top30Amt) || array_sum(array_column($top30Amt, 'total_amount')) == 0): ?>
+        <?php if (empty($top15Amt) || array_sum(array_column($top15Amt, 'total_amount')) == 0): ?>
             <div class="empty-state"><i class="fas fa-chart-bar"></i><h4>매출 금액 데이터가 없습니다</h4></div>
         <?php else: ?>
-        <div class="chart-container tall"><canvas id="top30AmtChart"></canvas></div>
+        <div class="chart-container" style="height:520px;"><canvas id="top15AmtChart"></canvas></div>
         <?php endif; ?>
         
         <!-- Detail list (hidden by default) -->
@@ -172,11 +172,11 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 </div>
 
 <?php
-$qtyNames = json_encode(array_map(function($s){ return $s['sort_order'].'.'.$s['name']; }, $top30Qty), JSON_UNESCAPED_UNICODE);
-$qtyValues = json_encode(array_map(function($s){ return (int)$s['total_quantity']; }, $top30Qty));
+$qtyNames = json_encode(array_map(function($s){ return $s['sort_order'].'.'.$s['name']; }, $top15Qty), JSON_UNESCAPED_UNICODE);
+$qtyValues = json_encode(array_map(function($s){ return (int)$s['total_quantity']; }, $top15Qty));
 
-$amtNames = json_encode(array_map(function($s){ return $s['sort_order'].'.'.$s['name']; }, $top30Amt), JSON_UNESCAPED_UNICODE);
-$amtValues = json_encode(array_map(function($s){ return (int)$s['total_amount']; }, $top30Amt));
+$amtNames = json_encode(array_map(function($s){ return $s['sort_order'].'.'.$s['name']; }, $top15Amt), JSON_UNESCAPED_UNICODE);
+$amtValues = json_encode(array_map(function($s){ return (int)$s['total_amount']; }, $top15Amt));
 
 $pageScript = <<<JS
 function openModal() {
@@ -204,8 +204,8 @@ var fmtKRW = function(v) { return new Intl.NumberFormat('ko-KR').format(v) + '�
 Chart.defaults.color = '#94a3b8';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
 
-// TOP 30 Quantity Chart
-var qtyEl = document.getElementById('top30QtyChart');
+// TOP 15 Quantity Chart
+var qtyEl = document.getElementById('top15QtyChart');
 if (qtyEl) {
     new Chart(qtyEl, {
         type: 'bar',
@@ -215,17 +215,28 @@ if (qtyEl) {
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            layout: { padding: { left: 10 } },
             plugins: { 
                 tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + ctx.parsed.x.toLocaleString() + '개'; } } },
                 legend: { display: false } 
             },
-            scales: { x: { beginAtZero: true } }
+            scales: {
+                y: {
+                    ticks: {
+                        font: { size: 12, weight: 'bold' },
+                        color: '#e2e8f0',
+                        autoSkip: false,
+                        padding: 6
+                    }
+                },
+                x: { beginAtZero: true }
+            }
         }
     });
 }
 
-// TOP 30 Amount Chart
-var amtEl = document.getElementById('top30AmtChart');
+// TOP 15 Amount Chart
+var amtEl = document.getElementById('top15AmtChart');
 if (amtEl) {
     new Chart(amtEl, {
         type: 'bar',
@@ -235,11 +246,22 @@ if (amtEl) {
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            layout: { padding: { left: 10 } },
             plugins: { 
                 tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + fmtKRW(ctx.parsed.x); } } },
                 legend: { display: false } 
             },
-            scales: { x: { beginAtZero: true, ticks: { callback: function(v) { return (v/10000).toLocaleString() + '만'; } } } }
+            scales: {
+                y: {
+                    ticks: {
+                        font: { size: 12, weight: 'bold' },
+                        color: '#e2e8f0',
+                        autoSkip: false,
+                        padding: 6
+                    }
+                },
+                x: { beginAtZero: true, ticks: { callback: function(v) { return (v/10000).toLocaleString() + '만'; } } }
+            }
         }
     });
 }
