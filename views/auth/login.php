@@ -55,7 +55,7 @@
                                style="padding-left:40px;" autocomplete="current-password">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:8px;">
+                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:8px;justify-content:center;">
                     <i class="fas fa-sign-in-alt"></i> 로그인
                 </button>
             </form>
