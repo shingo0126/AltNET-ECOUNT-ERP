@@ -88,7 +88,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         <?php if (empty($top15Qty) || array_sum(array_column($top15Qty, 'total_quantity')) == 0): ?>
             <div class="empty-state"><i class="fas fa-chart-bar"></i><h4>판매 수량 데이터가 없습니다</h4></div>
         <?php else: ?>
-        <div class="chart-container" style="height:520px;"><canvas id="top15QtyChart"></canvas></div>
+        <div class="chart-container top15"><canvas id="top15QtyChart"></canvas></div>
         <?php endif; ?>
         
         <!-- Detail list (hidden by default) -->
@@ -125,7 +125,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         <?php if (empty($top15Amt) || array_sum(array_column($top15Amt, 'total_amount')) == 0): ?>
             <div class="empty-state"><i class="fas fa-chart-bar"></i><h4>매출 금액 데이터가 없습니다</h4></div>
         <?php else: ?>
-        <div class="chart-container" style="height:520px;"><canvas id="top15AmtChart"></canvas></div>
+        <div class="chart-container top15"><canvas id="top15AmtChart"></canvas></div>
         <?php endif; ?>
         
         <!-- Detail list (hidden by default) -->
@@ -205,9 +205,10 @@ Chart.defaults.color = '#94a3b8';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
 
 // TOP 15 Quantity Chart
+var top15QtyChart = null;
 var qtyEl = document.getElementById('top15QtyChart');
 if (qtyEl) {
-    new Chart(qtyEl, {
+    top15QtyChart = new Chart(qtyEl, {
         type: 'bar',
         data: {
             labels: $qtyNames,
@@ -236,9 +237,10 @@ if (qtyEl) {
 }
 
 // TOP 15 Amount Chart
+var top15AmtChart = null;
 var amtEl = document.getElementById('top15AmtChart');
 if (amtEl) {
-    new Chart(amtEl, {
+    top15AmtChart = new Chart(amtEl, {
         type: 'bar',
         data: {
             labels: $amtNames,
@@ -265,5 +267,15 @@ if (amtEl) {
         }
     });
 }
+
+// 브라우저 리사이즈 시 Chart.js 강제 리사이즈
+var resizeTimer = null;
+window.addEventListener('resize', function() {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+        if (top15QtyChart) top15QtyChart.resize();
+        if (top15AmtChart) top15AmtChart.resize();
+    }, 150);
+});
 JS;
 ?>

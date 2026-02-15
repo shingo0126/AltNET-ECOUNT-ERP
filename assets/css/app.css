@@ -1272,8 +1272,11 @@ select.form-control option {
     position: relative;
     height: 350px;
     width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 .chart-container.tall { height: 450px; }
+.chart-container.top15 { height: 520px; }
 
 /* ===== EMPTY STATE ===== */
 .empty-state {
@@ -1334,6 +1337,7 @@ select.form-control option {
     .menu-toggle { display: block; }
     .content-area { padding: 16px; }
     .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .chart-container.top15 { height: 400px; }
 
     .line-item {
         grid-template-columns: 1fr 1fr 1fr 1fr 28px;
@@ -1371,6 +1375,7 @@ select.form-control option {
     .stat-grid { grid-template-columns: 1fr; }
     .login-card { padding: 32px 24px 28px; }
     .btn { padding: 7px 12px; font-size: 12px; }
+    .chart-container.top15 { height: 320px; }
 }
 
 /* ===== PRINT ===== */
