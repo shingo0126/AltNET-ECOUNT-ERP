@@ -255,6 +255,8 @@ a:hover { color: #67e8f9; }
     flex: 1;
     margin-left: var(--sidebar-w);
     min-height: 100vh;
+    min-width: 0;              /* flex 자식 shrink 허용 — 핵심 */
+    overflow-x: hidden;        /* 내부 콘텐츠 넘침 방지 */
     transition: margin-left .3s ease;
     position: relative;
     z-index: 1;
@@ -312,6 +314,8 @@ a:hover { color: #67e8f9; }
 
 .content-area {
     padding: 24px;
+    min-width: 0;              /* 내부 grid/flex 자식 shrink 허용 */
+    overflow-x: hidden;        /* 테이블·차트 넘침 방지 */
 }
 
 /* ===== CARDS (Z-depth 2: glass) ===== */
@@ -366,7 +370,7 @@ a:hover { color: #67e8f9; }
     gap: 8px;
 }
 
-.card-body { padding: 20px; position: relative; z-index: 1; }
+.card-body { padding: 20px; position: relative; z-index: 1; min-width: 0; overflow: hidden; }
 
 .card-footer {
     padding: 12px 20px;
