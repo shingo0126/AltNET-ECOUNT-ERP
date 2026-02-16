@@ -5,8 +5,8 @@ class DashboardController {
         $db = Database::getInstance();
         $year = getParam('year', date('Y'));
         $month = getParam('month', date('m'));
-        $quarter = getParam('quarter', '');
-        $viewType = getParam('view', 'monthly'); // monthly or quarterly
+        $quarter = getParam('quarter', '1'); // 기본값 1분기 (빈 문자열 방지)
+        $viewType = getParam('view', 'monthly'); // monthly, quarterly, yearly
         
         // === TOP20 독립 필터 파라미터 ===
         $topYear = getParam('top_year', $year);
@@ -15,14 +15,28 @@ class DashboardController {
         $topQuarter = getParam('top_quarter', '1');
         
         // Build date filter for summary period
-        if ($viewType === 'quarterly' && $quarter) {
-            $periodLabel = "{$year}년 {$quarter}분기";
+        if ($viewType === 'yearly') {
+            $periodLabel = "{$year}년 전체";
+        } elseif ($viewType === 'quarterly' && $quarter) {
+            $qNames = ['', '1분기(1~3월)', '2분기(4~6월)', '3분기(7~9월)', '4분기(10~12월)'];
+            $periodLabel = "{$year}년 " . ($qNames[(int)$quarter] ?? "{$quarter}분기");
         } else {
             $periodLabel = "{$year}년 {$month}월";
         }
         
         // Summary stats for period
-        if ($viewType === 'quarterly' && $quarter) {
+        if ($viewType === 'yearly') {
+            $monthlySales = $db->fetch(
+                "SELECT COALESCE(SUM(total_amount),0) as total, COUNT(*) as cnt 
+                 FROM sales WHERE YEAR(sale_date)=? AND is_deleted=0",
+                [$year]
+            );
+            $monthlyPurchases = $db->fetch(
+                "SELECT COALESCE(SUM(total_amount),0) as total 
+                 FROM purchases WHERE YEAR(purchase_date)=? AND is_deleted=0",
+                [$year]
+            );
+        } elseif ($viewType === 'quarterly' && $quarter) {
             $monthlySales = $db->fetch(
                 "SELECT COALESCE(SUM(total_amount),0) as total, COUNT(*) as cnt 
                  FROM sales WHERE YEAR(sale_date)=? AND QUARTER(sale_date)=? AND is_deleted=0",

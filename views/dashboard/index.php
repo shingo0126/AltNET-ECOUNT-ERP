@@ -18,6 +18,7 @@
                 <select name="view" class="form-control" onchange="this.form.submit()">
                     <option value="monthly" <?= $viewType === 'monthly' ? 'selected' : '' ?>>월별</option>
                     <option value="quarterly" <?= $viewType === 'quarterly' ? 'selected' : '' ?>>분기별</option>
+                    <option value="yearly" <?= $viewType === 'yearly' ? 'selected' : '' ?>>연간</option>
                 </select>
             </div>
             <?php if ($viewType === 'monthly'): ?>
@@ -28,7 +29,7 @@
                     <?php endfor; ?>
                 </select>
             </div>
-            <?php else: ?>
+            <?php elseif ($viewType === 'quarterly'): ?>
             <div class="form-group mb-0">
                 <select name="quarter" class="form-control" onchange="this.form.submit()">
                     <option value="1" <?= $quarter == '1' ? 'selected' : '' ?>>1분기 (1~3월)</option>
@@ -45,7 +46,7 @@
 <!-- Summary Stats -->
 <div class="stat-grid">
     <div class="stat-card accent">
-        <div class="stat-label"><i class="fas fa-chart-line"></i> 매출 총액 (<?= $viewType === 'monthly' ? "{$month}월" : "{$quarter}분기" ?>)</div>
+        <div class="stat-label"><i class="fas fa-chart-line"></i> 매출 총액 (<?= $viewType === 'yearly' ? '연간' : ($viewType === 'monthly' ? "{$month}월" : "{$quarter}분기") ?>)</div>
         <div class="stat-value"><?= formatMoney($monthlySales['total']) ?></div>
         <div class="stat-sub">원</div>
     </div>

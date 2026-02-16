@@ -15,19 +15,37 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         <form method="GET" class="filter-bar" style="margin:0;">
             <input type="hidden" name="page" value="sales">
             <div class="form-group">
-                <select name="year" class="form-control">
+                <select name="year" class="form-control" onchange="this.form.submit()">
                     <?php foreach ($years as $y): ?>
                     <option value="<?= $y['y'] ?>" <?= $y['y'] == $year ? 'selected' : '' ?>><?= $y['y'] ?>년</option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
-                <select name="month" class="form-control">
+                <select name="view" class="form-control" onchange="this.form.submit()">
+                    <option value="monthly" <?= $viewType === 'monthly' ? 'selected' : '' ?>>월별</option>
+                    <option value="quarterly" <?= $viewType === 'quarterly' ? 'selected' : '' ?>>분기별</option>
+                    <option value="yearly" <?= $viewType === 'yearly' ? 'selected' : '' ?>>연간</option>
+                </select>
+            </div>
+            <?php if ($viewType === 'monthly'): ?>
+            <div class="form-group">
+                <select name="month" class="form-control" onchange="this.form.submit()">
                     <?php for ($m = 1; $m <= 12; $m++): ?>
                     <option value="<?= $m ?>" <?= $m == $month ? 'selected' : '' ?>><?= $m ?>월</option>
                     <?php endfor; ?>
                 </select>
             </div>
+            <?php elseif ($viewType === 'quarterly'): ?>
+            <div class="form-group">
+                <select name="quarter" class="form-control" onchange="this.form.submit()">
+                    <option value="1" <?= $quarter == '1' ? 'selected' : '' ?>>1분기 (1~3월)</option>
+                    <option value="2" <?= $quarter == '2' ? 'selected' : '' ?>>2분기 (4~6월)</option>
+                    <option value="3" <?= $quarter == '3' ? 'selected' : '' ?>>3분기 (7~9월)</option>
+                    <option value="4" <?= $quarter == '4' ? 'selected' : '' ?>>4분기 (10~12월)</option>
+                </select>
+            </div>
+            <?php endif; ?>
             <div class="form-group">
                 <input type="text" name="search" class="form-control" placeholder="업체명/매출번호 검색" value="<?= e($search) ?>">
             </div>
@@ -42,7 +60,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         <h3><i class="fas fa-file-invoice-dollar" style="color:var(--cyan-accent)"></i> 매출/매입 내역</h3>
         <div class="d-flex gap-2 flex-wrap">
             <a href="?page=sales&action=create" class="btn btn-primary"><i class="fas fa-plus"></i> 매출등록</a>
-            <a href="?page=sales&action=export&year=<?= e($year) ?>&month=<?= e($month) ?>" class="btn btn-success"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
+            <a href="?page=sales&action=export&year=<?= e($year) ?>&month=<?= e($month) ?>&quarter=<?= e($quarter) ?>&view=<?= e($viewType) ?>" class="btn btn-success"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
         </div>
     </div>
     <div class="card-body">
@@ -99,17 +117,18 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         </div>
         
         <!-- 매출/매입 내역 Pagination -->
+        <?php $filterQS = "year={$year}&view={$viewType}&month={$month}&quarter={$quarter}&search=" . urlencode($search); ?>
         <?php if ($pag['total_pages'] > 1): ?>
         <div class="pagination">
             <?php if ($pag['current'] > 1): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $pag['current']-1 ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-left"></i></a>
+            <a href="?page=sales&<?= $filterQS ?>&p=<?= $pag['current']-1 ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-left"></i></a>
             <?php endif; ?>
             <?php for ($i = max(1, $pag['current']-3); $i <= min($pag['total_pages'], $pag['current']+3); $i++): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $i ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPage ?>" 
+            <a href="?page=sales&<?= $filterQS ?>&p=<?= $i ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPage ?>" 
                class="<?= $i == $pag['current'] ? 'active' : '' ?>"><?= $i ?></a>
             <?php endfor; ?>
             <?php if ($pag['current'] < $pag['total_pages']): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $pag['current']+1 ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-right"></i></a>
+            <a href="?page=sales&<?= $filterQS ?>&p=<?= $pag['current']+1 ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-right"></i></a>
             <?php endif; ?>
         </div>
         <?php endif; ?>
@@ -119,8 +138,8 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <!-- ===== 2. 매출 집계 리스트 (업체별) ===== -->
 <div class="card mb-2">
     <div class="card-header">
-        <h3><i class="fas fa-chart-bar" style="color:var(--emerald)"></i> 매출 집계 <span class="badge badge-user" style="font-size:11px;margin-left:8px;"><?= e($year) ?>년 <?= e($month) ?>월</span></h3>
-        <a href="?page=sales&action=exportSaleSummary&year=<?= e($year) ?>&month=<?= e($month) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
+        <h3><i class="fas fa-chart-bar" style="color:var(--emerald)"></i> 매출 집계 <span class="badge badge-user" style="font-size:11px;margin-left:8px;"><?= e($periodLabel) ?></span></h3>
+        <a href="?page=sales&action=exportSaleSummary&year=<?= e($year) ?>&month=<?= e($month) ?>&quarter=<?= e($quarter) ?>&view=<?= e($viewType) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -161,14 +180,14 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         <?php if ($saleSumPag['total_pages'] > 1): ?>
         <div class="pagination">
             <?php if ($saleSumPag['current'] > 1): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $saleSumPag['current']-1 ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-left"></i></a>
+            <a href="?page=sales&<?= $filterQS ?>&p=<?= $page ?>&sp=<?= $saleSumPag['current']-1 ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-left"></i></a>
             <?php endif; ?>
             <?php for ($i = max(1, $saleSumPag['current']-3); $i <= min($saleSumPag['total_pages'], $saleSumPag['current']+3); $i++): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $i ?>&pp=<?= $purchSumPage ?>" 
+            <a href="?page=sales&<?= $filterQS ?>&p=<?= $page ?>&sp=<?= $i ?>&pp=<?= $purchSumPage ?>" 
                class="<?= $i == $saleSumPag['current'] ? 'active' : '' ?>"><?= $i ?></a>
             <?php endfor; ?>
             <?php if ($saleSumPag['current'] < $saleSumPag['total_pages']): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $saleSumPag['current']+1 ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-right"></i></a>
+            <a href="?page=sales&<?= $filterQS ?>&p=<?= $page ?>&sp=<?= $saleSumPag['current']+1 ?>&pp=<?= $purchSumPage ?>"><i class="fas fa-chevron-right"></i></a>
             <?php endif; ?>
         </div>
         <?php endif; ?>
@@ -178,8 +197,8 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 <!-- ===== 3. 매입 집계 리스트 (업체별) ===== -->
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-chart-pie" style="color:var(--amber-glow)"></i> 매입 집계 <span class="badge badge-user" style="font-size:11px;margin-left:8px;"><?= e($year) ?>년 <?= e($month) ?>월</span></h3>
-        <a href="?page=sales&action=exportPurchSummary&year=<?= e($year) ?>&month=<?= e($month) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
+        <h3><i class="fas fa-chart-pie" style="color:var(--amber-glow)"></i> 매입 집계 <span class="badge badge-user" style="font-size:11px;margin-left:8px;"><?= e($periodLabel) ?></span></h3>
+        <a href="?page=sales&action=exportPurchSummary&year=<?= e($year) ?>&month=<?= e($month) ?>&quarter=<?= e($quarter) ?>&view=<?= e($viewType) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV 다운로드</a>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -215,14 +234,14 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         <?php if ($purchSumPag['total_pages'] > 1): ?>
         <div class="pagination">
             <?php if ($purchSumPag['current'] > 1): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPag['current']-1 ?>"><i class="fas fa-chevron-left"></i></a>
+            <a href="?page=sales&<?= $filterQS ?>&p=<?= $page ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPag['current']-1 ?>"><i class="fas fa-chevron-left"></i></a>
             <?php endif; ?>
             <?php for ($i = max(1, $purchSumPag['current']-3); $i <= min($purchSumPag['total_pages'], $purchSumPag['current']+3); $i++): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $saleSumPage ?>&pp=<?= $i ?>" 
+            <a href="?page=sales&<?= $filterQS ?>&p=<?= $page ?>&sp=<?= $saleSumPage ?>&pp=<?= $i ?>" 
                class="<?= $i == $purchSumPag['current'] ? 'active' : '' ?>"><?= $i ?></a>
             <?php endfor; ?>
             <?php if ($purchSumPag['current'] < $purchSumPag['total_pages']): ?>
-            <a href="?page=sales&year=<?= $year ?>&month=<?= $month ?>&search=<?= urlencode($search) ?>&p=<?= $page ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPag['current']+1 ?>"><i class="fas fa-chevron-right"></i></a>
+            <a href="?page=sales&<?= $filterQS ?>&p=<?= $page ?>&sp=<?= $saleSumPage ?>&pp=<?= $purchSumPag['current']+1 ?>"><i class="fas fa-chevron-right"></i></a>
             <?php endif; ?>
         </div>
         <?php endif; ?>

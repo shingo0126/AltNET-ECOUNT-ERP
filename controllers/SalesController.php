@@ -5,12 +5,33 @@ class SalesController {
         $db = Database::getInstance();
         $year = getParam('year', date('Y'));
         $month = getParam('month', date('m'));
+        $quarter = getParam('quarter', '1');
+        $viewType = getParam('view', 'monthly'); // monthly, quarterly, yearly
         $search = getParam('search', '');
         $page = max(1, (int)getParam('p', 1));
         $perPage = 20;
         
-        $where = "s.is_deleted=0 AND YEAR(s.sale_date)=? AND MONTH(s.sale_date)=?";
-        $params = [$year, $month];
+        // === 조회기간 라벨 ===
+        if ($viewType === 'yearly') {
+            $periodLabel = "{$year}년 전체";
+        } elseif ($viewType === 'quarterly') {
+            $qNames = ['', '1분기(1~3월)', '2분기(4~6월)', '3분기(7~9월)', '4분기(10~12월)'];
+            $periodLabel = "{$year}년 " . ($qNames[(int)$quarter] ?? "{$quarter}분기");
+        } else {
+            $periodLabel = "{$year}년 {$month}월";
+        }
+        
+        // === 매출 내역 필터 ===
+        $where = "s.is_deleted=0 AND YEAR(s.sale_date)=?";
+        $params = [$year];
+        if ($viewType === 'monthly') {
+            $where .= " AND MONTH(s.sale_date)=?";
+            $params[] = $month;
+        } elseif ($viewType === 'quarterly') {
+            $where .= " AND QUARTER(s.sale_date)=?";
+            $params[] = $quarter;
+        }
+        // yearly: 연도 전체 조회 (추가 조건 없음)
         
         if ($search) {
             $where .= " AND (c.name LIKE ? OR s.sale_number LIKE ?)";
@@ -42,8 +63,15 @@ class SalesController {
         
         // === 매출 집계 (업체별 합산) ===
         $saleSumPage = max(1, (int)getParam('sp', 1));
-        $saleSumWhere = "s.is_deleted=0 AND YEAR(s.sale_date)=? AND MONTH(s.sale_date)=?";
-        $saleSumParams = [$year, $month];
+        $saleSumWhere = "s.is_deleted=0 AND YEAR(s.sale_date)=?";
+        $saleSumParams = [$year];
+        if ($viewType === 'monthly') {
+            $saleSumWhere .= " AND MONTH(s.sale_date)=?";
+            $saleSumParams[] = $month;
+        } elseif ($viewType === 'quarterly') {
+            $saleSumWhere .= " AND QUARTER(s.sale_date)=?";
+            $saleSumParams[] = $quarter;
+        }
         if ($search) {
             $saleSumWhere .= " AND (c.name LIKE ? OR s.sale_number LIKE ?)";
             $saleSumParams[] = "%{$search}%";
@@ -69,8 +97,15 @@ class SalesController {
         
         // === 매입 집계 (업체별 합산) ===
         $purchSumPage = max(1, (int)getParam('pp', 1));
-        $purchSumWhere = "p.is_deleted=0 AND YEAR(p.purchase_date)=? AND MONTH(p.purchase_date)=?";
-        $purchSumParams = [$year, $month];
+        $purchSumWhere = "p.is_deleted=0 AND YEAR(p.purchase_date)=?";
+        $purchSumParams = [$year];
+        if ($viewType === 'monthly') {
+            $purchSumWhere .= " AND MONTH(p.purchase_date)=?";
+            $purchSumParams[] = $month;
+        } elseif ($viewType === 'quarterly') {
+            $purchSumWhere .= " AND QUARTER(p.purchase_date)=?";
+            $purchSumParams[] = $quarter;
+        }
         if ($search) {
             $purchSumWhere .= " AND (v.name LIKE ? OR p.purchase_number LIKE ?)";
             $purchSumParams[] = "%{$search}%";
@@ -351,6 +386,23 @@ class SalesController {
         $db = Database::getInstance();
         $year = getParam('year', date('Y'));
         $month = getParam('month', date('m'));
+        $quarter = getParam('quarter', '1');
+        $viewType = getParam('view', 'monthly');
+        
+        $where = "s.is_deleted=0 AND YEAR(s.sale_date)=?";
+        $params = [$year];
+        $fileSuffix = "{$year}";
+        if ($viewType === 'monthly') {
+            $where .= " AND MONTH(s.sale_date)=?";
+            $params[] = $month;
+            $fileSuffix .= "_{$month}월";
+        } elseif ($viewType === 'quarterly') {
+            $where .= " AND QUARTER(s.sale_date)=?";
+            $params[] = $quarter;
+            $fileSuffix .= "_{$quarter}분기";
+        } else {
+            $fileSuffix .= "_연간";
+        }
         
         $sales = $db->fetchAll(
             "SELECT s.sale_number, s.sale_date, c.name as company_name, s.total_amount, s.vat_amount, 
@@ -361,12 +413,12 @@ class SalesController {
              LEFT JOIN companies c ON s.company_id=c.id 
              LEFT JOIN sale_details sd_first ON sd_first.sale_id=s.id AND sd_first.sort_order=0
              LEFT JOIN sale_items fi ON fi.id=sd_first.sale_item_id
-             WHERE s.is_deleted=0 AND YEAR(s.sale_date)=? AND MONTH(s.sale_date)=?
+             WHERE $where
              ORDER BY s.sale_date",
-            [$year, $month]
+            $params
         );
         
-        AuditLog::log('EXPORT', 'sales', null, null, null, "매출 CSV 다운로드 ({$year}-{$month})");
+        AuditLog::log('EXPORT', 'sales', null, null, null, "매출 CSV 다운로드 ({$fileSuffix})");
         
         $headers = ['매출번호', '매출일자', '업체명', '제품코드', '매출총액', '부가세', '매입총액', '영업이익'];
         $rows = [];
@@ -383,7 +435,7 @@ class SalesController {
             ];
         }
         
-        csvExport("매출내역_{$year}_{$month}.csv", $headers, $rows);
+        csvExport("매출내역_{$fileSuffix}.csv", $headers, $rows);
     }
     
     /**
@@ -393,6 +445,23 @@ class SalesController {
         $db = Database::getInstance();
         $year = getParam('year', date('Y'));
         $month = getParam('month', date('m'));
+        $quarter = getParam('quarter', '1');
+        $viewType = getParam('view', 'monthly');
+        
+        $where = "s.is_deleted=0 AND YEAR(s.sale_date)=?";
+        $params = [$year];
+        $fileSuffix = "{$year}";
+        if ($viewType === 'monthly') {
+            $where .= " AND MONTH(s.sale_date)=?";
+            $params[] = $month;
+            $fileSuffix .= "_{$month}월";
+        } elseif ($viewType === 'quarterly') {
+            $where .= " AND QUARTER(s.sale_date)=?";
+            $params[] = $quarter;
+            $fileSuffix .= "_{$quarter}분기";
+        } else {
+            $fileSuffix .= "_연간";
+        }
         
         $data = $db->fetchAll(
             "SELECT c.name as company_name, COUNT(s.id) as sale_count,
@@ -400,13 +469,13 @@ class SalesController {
                     COALESCE(SUM((SELECT SUM(p2.total_amount) FROM purchases p2 WHERE p2.sale_id=s.id AND p2.is_deleted=0)),0) as total_purchases
              FROM sales s
              LEFT JOIN companies c ON s.company_id=c.id
-             WHERE s.is_deleted=0 AND YEAR(s.sale_date)=? AND MONTH(s.sale_date)=?
+             WHERE $where
              GROUP BY c.id, c.name
              ORDER BY total_sales DESC",
-            [$year, $month]
+            $params
         );
         
-        AuditLog::log('EXPORT', 'sales', null, null, null, "매출집계 CSV 다운로드 ({$year}-{$month})");
+        AuditLog::log('EXPORT', 'sales', null, null, null, "매출집계 CSV 다운로드 ({$fileSuffix})");
         
         $headers = ['순위', '업체명', '건수', '매출합계', '부가세합계', '매입합계', '영업이익'];
         $rows = [];
@@ -419,7 +488,7 @@ class SalesController {
             ];
         }
         
-        csvExport("매출집계_{$year}_{$month}.csv", $headers, $rows);
+        csvExport("매출집계_{$fileSuffix}.csv", $headers, $rows);
     }
     
     /**
@@ -429,6 +498,23 @@ class SalesController {
         $db = Database::getInstance();
         $year = getParam('year', date('Y'));
         $month = getParam('month', date('m'));
+        $quarter = getParam('quarter', '1');
+        $viewType = getParam('view', 'monthly');
+        
+        $where = "p.is_deleted=0 AND YEAR(p.purchase_date)=?";
+        $params = [$year];
+        $fileSuffix = "{$year}";
+        if ($viewType === 'monthly') {
+            $where .= " AND MONTH(p.purchase_date)=?";
+            $params[] = $month;
+            $fileSuffix .= "_{$month}월";
+        } elseif ($viewType === 'quarterly') {
+            $where .= " AND QUARTER(p.purchase_date)=?";
+            $params[] = $quarter;
+            $fileSuffix .= "_{$quarter}분기";
+        } else {
+            $fileSuffix .= "_연간";
+        }
         
         $data = $db->fetchAll(
             "SELECT v.name as vendor_name, COUNT(DISTINCT p.id) as purchase_count,
@@ -436,13 +522,13 @@ class SalesController {
              FROM purchase_details pd
              JOIN purchases p ON pd.purchase_id = p.id
              LEFT JOIN vendors v ON COALESCE(pd.vendor_id, p.vendor_id) = v.id
-             WHERE p.is_deleted=0 AND YEAR(p.purchase_date)=? AND MONTH(p.purchase_date)=?
+             WHERE $where
              GROUP BY v.id, v.name
              ORDER BY total_purchases DESC",
-            [$year, $month]
+            $params
         );
         
-        AuditLog::log('EXPORT', 'purchases', null, null, null, "매입집계 CSV 다운로드 ({$year}-{$month})");
+        AuditLog::log('EXPORT', 'purchases', null, null, null, "매입집계 CSV 다운로드 ({$fileSuffix})");
         
         $headers = ['순위', '업체명', '건수', '매입합계', '부가세합계'];
         $rows = [];
@@ -453,6 +539,6 @@ class SalesController {
             ];
         }
         
-        csvExport("매입집계_{$year}_{$month}.csv", $headers, $rows);
+        csvExport("매입집계_{$fileSuffix}.csv", $headers, $rows);
     }
 }
