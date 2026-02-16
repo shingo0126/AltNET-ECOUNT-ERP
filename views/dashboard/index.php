@@ -326,6 +326,7 @@ new Chart(document.getElementById('salesChart'), {
     },
     options: {
         responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 25 } },
         plugins: { 
             tooltip: tooltipVertical, 
             legend: { display: true, position: 'top', labels: { boxWidth: 14, padding: 15, font: { size: 12 } } },
@@ -336,7 +337,7 @@ new Chart(document.getElementById('salesChart'), {
                 formatter: function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR'); }
             }
         },
-        scales: { y: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } }
+        scales: { y: { beginAtZero: true, grace: '15%', ticks: { callback: v => (v/10000).toLocaleString() + '만' } } }
     }
 });
 
@@ -355,6 +356,7 @@ new Chart(document.getElementById('countChart'), {
     },
     options: {
         responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 25 } },
         plugins: {
             tooltip: { callbacks: { label: function(ctx) { return (ctx.parsed.y || 0) + '건'; } } },
             legend: { display: false },
@@ -365,7 +367,7 @@ new Chart(document.getElementById('countChart'), {
                 formatter: function(v) { return v + '건'; }
             }
         },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        scales: { y: { beginAtZero: true, grace: '20%', ticks: { stepSize: 1 } } }
     }
 });
 
@@ -377,9 +379,11 @@ function createCompanyChart(names, totals) {
     var wrap = document.getElementById('companyChartWrap');
     if (names.length === 0) { wrap.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><h4>데이터가 없습니다</h4></div>'; companyChart = null; return; }
     wrap.innerHTML = '<div class="chart-container tall"><canvas id="topCompaniesChart"></canvas></div>';
+    var maxVal = totals.length > 0 ? Math.max.apply(null, totals) : 0;
     companyChart = new Chart(document.getElementById('topCompaniesChart'), {
         type: 'bar', data: { labels: names, datasets: [{ label: '매출액', data: totals, backgroundColor: 'rgba(37,99,235,.55)', borderRadius: 3 }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            layout: { padding: { right: 60 } },
             plugins: { tooltip: tooltipHorizontal, legend: { display: false },
                 datalabels: {
                     display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
@@ -388,16 +392,18 @@ function createCompanyChart(names, totals) {
                     formatter: function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR') + '원'; }
                 }
             },
-            scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } } }
+            scales: { x: { beginAtZero: true, suggestedMax: maxVal * 1.18, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } } }
     });
 }
 function createVendorChart(names, totals) {
     var wrap = document.getElementById('vendorChartWrap');
     if (names.length === 0) { wrap.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><h4>데이터가 없습니다</h4></div>'; vendorChart = null; return; }
     wrap.innerHTML = '<div class="chart-container tall"><canvas id="topVendorsChart"></canvas></div>';
+    var maxVal = totals.length > 0 ? Math.max.apply(null, totals) : 0;
     vendorChart = new Chart(document.getElementById('topVendorsChart'), {
         type: 'bar', data: { labels: names, datasets: [{ label: '매입액', data: totals, backgroundColor: 'rgba(245,158,11,.55)', borderRadius: 3 }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            layout: { padding: { right: 60 } },
             plugins: { tooltip: tooltipHorizontal, legend: { display: false },
                 datalabels: {
                     display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
@@ -406,7 +412,7 @@ function createVendorChart(names, totals) {
                     formatter: function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR') + '원'; }
                 }
             },
-            scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } } }
+            scales: { x: { beginAtZero: true, suggestedMax: maxVal * 1.18, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } } }
     });
 }
 

@@ -256,7 +256,7 @@ a:hover { color: #67e8f9; }
     margin-left: var(--sidebar-w);
     min-height: 100vh;
     min-width: 0;              /* flex 자식 shrink 허용 — 핵심 */
-    overflow-x: hidden;        /* 내부 콘텐츠 넘침 방지 */
+    overflow-x: clip;          /* 넘침 방지하면서 sticky 동작 보장 (overflow:hidden→clip) */
     transition: margin-left .3s ease;
     position: relative;
     z-index: 1;
@@ -315,7 +315,7 @@ a:hover { color: #67e8f9; }
 .content-area {
     padding: 24px;
     min-width: 0;              /* 내부 grid/flex 자식 shrink 허용 */
-    overflow-x: hidden;        /* 테이블·차트 넘침 방지 */
+    overflow-x: clip;          /* 테이블·차트 넘침 방지 (overflow:hidden→clip, sticky 호환) */
 }
 
 /* ===== CARDS (Z-depth 2: glass) ===== */

@@ -214,6 +214,7 @@ Chart.defaults.set('plugins.datalabels', { display: false });
 var top15QtyChart = null;
 var qtyEl = document.getElementById('top15QtyChart');
 if (qtyEl) {
+    var qtyMax = Math.max.apply(null, $qtyValues);
     top15QtyChart = new Chart(qtyEl, {
         type: 'bar',
         data: {
@@ -222,7 +223,7 @@ if (qtyEl) {
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-            layout: { padding: { left: 10, right: 50 } },
+            layout: { padding: { left: 10, right: 55 } },
             plugins: { 
                 tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + ctx.parsed.x.toLocaleString() + '개'; } } },
                 legend: { display: false },
@@ -242,7 +243,7 @@ if (qtyEl) {
                         padding: 6
                     }
                 },
-                x: { beginAtZero: true }
+                x: { beginAtZero: true, suggestedMax: qtyMax * 1.18 }
             }
         }
     });
@@ -252,6 +253,7 @@ if (qtyEl) {
 var top15AmtChart = null;
 var amtEl = document.getElementById('top15AmtChart');
 if (amtEl) {
+    var amtMax = Math.max.apply(null, $amtValues);
     top15AmtChart = new Chart(amtEl, {
         type: 'bar',
         data: {
@@ -260,7 +262,7 @@ if (amtEl) {
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-            layout: { padding: { left: 10, right: 60 } },
+            layout: { padding: { left: 10, right: 65 } },
             plugins: { 
                 tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + fmtKRW(ctx.parsed.x); } } },
                 legend: { display: false },
@@ -280,7 +282,7 @@ if (amtEl) {
                         padding: 6
                     }
                 },
-                x: { beginAtZero: true, ticks: { callback: function(v) { return (v/10000).toLocaleString() + '만'; } } }
+                x: { beginAtZero: true, suggestedMax: amtMax * 1.18, ticks: { callback: function(v) { return (v/10000).toLocaleString() + '만'; } } }
             }
         }
     });
