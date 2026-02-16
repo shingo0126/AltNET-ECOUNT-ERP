@@ -266,6 +266,11 @@ Chart.defaults.color = '#94a3b8';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
 Chart.defaults.plugins.legend.labels.color = '#94a3b8';
 
+// datalabels 플러그인 전역 등록
+Chart.register(ChartDataLabels);
+// 전역 기본값: 모든 차트에서 datalabels 비활성화 (개별 차트에서 명시적으로 활성화)
+Chart.defaults.set('plugins.datalabels', { display: false });
+
 const fmtKRW = v => new Intl.NumberFormat('ko-KR').format(v) + '원';
 const fmtMoney = v => new Intl.NumberFormat('ko-KR').format(parseInt(v));
 
@@ -323,7 +328,13 @@ new Chart(document.getElementById('salesChart'), {
         responsive: true, maintainAspectRatio: false,
         plugins: { 
             tooltip: tooltipVertical, 
-            legend: { display: true, position: 'top', labels: { boxWidth: 14, padding: 15, font: { size: 12 } } }
+            legend: { display: true, position: 'top', labels: { boxWidth: 14, padding: 15, font: { size: 12 } } },
+            datalabels: {
+                display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                anchor: 'end', align: 'top', offset: 2,
+                color: '#e2e8f0', font: { size: 10, weight: 'bold' },
+                formatter: function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR'); }
+            }
         },
         scales: { y: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } }
     }
@@ -344,7 +355,16 @@ new Chart(document.getElementById('countChart'), {
     },
     options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { tooltip: { callbacks: { label: function(ctx) { return (ctx.parsed.y || 0) + '건'; } } }, legend: { display: false } },
+        plugins: {
+            tooltip: { callbacks: { label: function(ctx) { return (ctx.parsed.y || 0) + '건'; } } },
+            legend: { display: false },
+            datalabels: {
+                display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                anchor: 'end', align: 'top', offset: 4,
+                color: '#22d3ee', font: { size: 11, weight: 'bold' },
+                formatter: function(v) { return v + '건'; }
+            }
+        },
         scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
     }
 });
@@ -359,7 +379,16 @@ function createCompanyChart(names, totals) {
     wrap.innerHTML = '<div class="chart-container tall"><canvas id="topCompaniesChart"></canvas></div>';
     companyChart = new Chart(document.getElementById('topCompaniesChart'), {
         type: 'bar', data: { labels: names, datasets: [{ label: '매출액', data: totals, backgroundColor: 'rgba(37,99,235,.55)', borderRadius: 3 }] },
-        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { tooltip: tooltipHorizontal, legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } } }
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: tooltipHorizontal, legend: { display: false },
+                datalabels: {
+                    display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#e2e8f0', font: { size: 10, weight: 'bold' },
+                    formatter: function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR') + '원'; }
+                }
+            },
+            scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } } }
     });
 }
 function createVendorChart(names, totals) {
@@ -368,7 +397,16 @@ function createVendorChart(names, totals) {
     wrap.innerHTML = '<div class="chart-container tall"><canvas id="topVendorsChart"></canvas></div>';
     vendorChart = new Chart(document.getElementById('topVendorsChart'), {
         type: 'bar', data: { labels: names, datasets: [{ label: '매입액', data: totals, backgroundColor: 'rgba(245,158,11,.55)', borderRadius: 3 }] },
-        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { tooltip: tooltipHorizontal, legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } } }
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: tooltipHorizontal, legend: { display: false },
+                datalabels: {
+                    display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#e2e8f0', font: { size: 10, weight: 'bold' },
+                    formatter: function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR') + '원'; }
+                }
+            },
+            scales: { x: { beginAtZero: true, ticks: { callback: v => (v/10000).toLocaleString() + '만' } } } }
     });
 }
 

@@ -206,6 +206,10 @@ var fmtKRW = function(v) { return new Intl.NumberFormat('ko-KR').format(v) + '�
 Chart.defaults.color = '#94a3b8';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
 
+// datalabels 플러그인 등록 및 기본 비활성화
+Chart.register(ChartDataLabels);
+Chart.defaults.set('plugins.datalabels', { display: false });
+
 // TOP 15 Quantity Chart
 var top15QtyChart = null;
 var qtyEl = document.getElementById('top15QtyChart');
@@ -218,10 +222,16 @@ if (qtyEl) {
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-            layout: { padding: { left: 10 } },
+            layout: { padding: { left: 10, right: 50 } },
             plugins: { 
                 tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + ctx.parsed.x.toLocaleString() + '개'; } } },
-                legend: { display: false } 
+                legend: { display: false },
+                datalabels: {
+                    display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#a5b4fc', font: { size: 11, weight: 'bold' },
+                    formatter: function(v) { return v.toLocaleString('ko-KR') + '개'; }
+                }
             },
             scales: {
                 y: {
@@ -250,10 +260,16 @@ if (amtEl) {
         },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-            layout: { padding: { left: 10 } },
+            layout: { padding: { left: 10, right: 60 } },
             plugins: { 
                 tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + fmtKRW(ctx.parsed.x); } } },
-                legend: { display: false } 
+                legend: { display: false },
+                datalabels: {
+                    display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#93c5fd', font: { size: 10, weight: 'bold' },
+                    formatter: function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR') + '원'; }
+                }
             },
             scales: {
                 y: {
