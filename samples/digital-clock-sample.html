@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디지털 시계 샘플 - AltNET ERP Header</title>
+    
+    <!-- Digital Font: Orbitron (가장 인기있는 디지털/테크 폰트) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 추가 옵션: Share Tech Mono, Digital Numbers -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.85);
+            --text-primary: #e2e8f0;
+            --text-muted: #94a3b8;
+            --cyan-accent: #22d3ee;
+            --indigo: #818cf8;
+            --emerald: #10b981;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: var(--bg-dark); 
+            color: var(--text-primary); 
+            font-family: 'Pretendard', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            padding: 40px;
+        }
+        
+        h2 { color: var(--cyan-accent); margin-bottom: 10px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
+        .sample-label { color: var(--text-muted); font-size: 12px; margin-bottom: 8px; }
+        
+        /* ===== 실제 Header Bar 시뮬레이션 ===== */
+        .topbar-sim {
+            width: 100%;
+            max-width: 900px;
+            height: 56px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+        .topbar-sim .left {
+            display: flex; align-items: center; gap: 12px;
+            color: var(--text-primary); font-weight: 600; font-size: 16px;
+        }
+        .topbar-sim .left i { color: var(--text-muted); }
+        
+        /* ===== 디지털 시계 스타일 (적용될 스타일) ===== */
+        .digital-clock {
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--cyan-accent);
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .digital-clock .clock-icon {
+            font-size: 14px;
+            color: var(--cyan-accent);
+            opacity: 0.8;
+        }
+        .digital-clock .clock-date {
+            color: var(--text-muted);
+            font-size: 16px;
+            font-weight: 400;
+        }
+        .digital-clock .clock-sep {
+            color: rgba(255,255,255,0.15);
+            margin: 0 4px;
+        }
+        .digital-clock .clock-time {
+            color: var(--cyan-accent);
+            font-weight: 600;
+        }
+        .digital-clock .blink {
+            animation: blink 1s step-start infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        
+        /* ===== 비교 샘플들 ===== */
+        .samples-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+        .sample-box {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .sample-box.selected {
+            border-color: var(--cyan-accent);
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
+        }
+        .sample-box .tag {
+            background: var(--cyan-accent);
+            color: #000;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        
+        /* Font variations */
+        .font-orbitron { font-family: 'Orbitron', monospace; }
+        .font-share { font-family: 'Share Tech Mono', monospace; }
+        .font-rajdhani { font-family: 'Rajdhani', monospace; }
+    </style>
+</head>
+<body>
+
+    <div style="text-align:center;">
+        <h2><i class="fas fa-clock"></i> AltNET ERP - 디지털 시계 Header 샘플</h2>
+        <p style="color:var(--text-muted);font-size:13px;">실제 적용될 Header 우측 상단 디지털 시계 미리보기</p>
+    </div>
+
+    <!-- ===== 실제 Header 시뮬레이션 (적용 예시) ===== -->
+    <div style="width:100%;max-width:900px;">
+        <div class="sample-label">▼ 실제 적용 모습 (Orbitron - 추천)</div>
+        <div class="topbar-sim">
+            <div class="left">
+                <i class="fas fa-bars"></i>
+                <span>대시보드</span>
+            </div>
+            <div class="digital-clock" id="mainClock">
+                <i class="fas fa-clock clock-icon"></i>
+                <span class="clock-date" id="mainDate">2026.02.16</span>
+                <span class="clock-sep">|</span>
+                <span class="clock-time" id="mainTime">22:16:30</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 폰트 비교 샘플 ===== -->
+    <div class="samples-grid">
+        <!-- Option A: Orbitron (추천) -->
+        <div class="sample-box selected">
+            <span class="tag">추천</span>
+            <div class="sample-label">Option A: Orbitron</div>
+            <div style="font-family:'Orbitron',monospace; font-size:16px; color:var(--cyan-accent); font-weight:500; letter-spacing:1.5px;">
+                <i class="fas fa-clock" style="font-size:14px;opacity:.8;margin-right:6px;"></i>
+                <span style="color:var(--text-muted);" id="dateA">2026.02.16</span>
+                <span style="color:rgba(255,255,255,0.15);margin:0 6px;">|</span>
+                <span style="font-weight:600;" id="timeA">22:16:30</span>
+            </div>
+        </div>
+        
+        <!-- Option B: Share Tech Mono -->
+        <div class="sample-box">
+            <div class="sample-label">Option B: Share Tech Mono</div>
+            <div style="font-family:'Share Tech Mono',monospace; font-size:16px; color:var(--cyan-accent); letter-spacing:1px;">
+                <i class="fas fa-clock" style="font-size:14px;opacity:.8;margin-right:6px;"></i>
+                <span style="color:var(--text-muted);" id="dateB">2026.02.16</span>
+                <span style="color:rgba(255,255,255,0.15);margin:0 6px;">|</span>
+                <span style="font-weight:600;" id="timeB">22:16:30</span>
+            </div>
+        </div>
+        
+        <!-- Option C: Rajdhani -->
+        <div class="sample-box">
+            <div class="sample-label">Option C: Rajdhani</div>
+            <div style="font-family:'Rajdhani',monospace; font-size:16px; color:var(--cyan-accent); font-weight:600; letter-spacing:1px;">
+                <i class="fas fa-clock" style="font-size:14px;opacity:.8;margin-right:6px;"></i>
+                <span style="color:var(--text-muted);" id="dateC">2026.02.16</span>
+                <span style="color:rgba(255,255,255,0.15);margin:0 6px;">|</span>
+                <span id="timeC">22:16:30</span>
+            </div>
+        </div>
+        
+        <!-- Option D: Orbitron Glow -->
+        <div class="sample-box">
+            <div class="sample-label">Option D: Orbitron + Glow 효과</div>
+            <div style="font-family:'Orbitron',monospace; font-size:16px; color:var(--cyan-accent); font-weight:500; letter-spacing:1.5px; text-shadow:0 0 8px rgba(34,211,238,0.4);">
+                <i class="fas fa-clock" style="font-size:14px;opacity:.8;margin-right:6px;"></i>
+                <span style="color:var(--text-muted);" id="dateD">2026.02.16</span>
+                <span style="color:rgba(255,255,255,0.15);margin:0 6px;">|</span>
+                <span style="font-weight:600;" id="timeD">22:16:30</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateClocks() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth()+1).padStart(2,'0');
+            const d = String(now.getDate()).padStart(2,'0');
+            const hh = String(now.getHours()).padStart(2,'0');
+            const mm = String(now.getMinutes()).padStart(2,'0');
+            const ss = String(now.getSeconds()).padStart(2,'0');
+            
+            const dateStr = y + '.' + m + '.' + d;
+            const timeStr = hh + ':' + mm + ':' + ss;
+            
+            // Main header clock
+            document.getElementById('mainDate').textContent = dateStr;
+            document.getElementById('mainTime').textContent = timeStr;
+            
+            // Sample clocks
+            ['A','B','C','D'].forEach(function(id) {
+                var dateEl = document.getElementById('date' + id);
+                var timeEl = document.getElementById('time' + id);
+                if (dateEl) dateEl.textContent = dateStr;
+                if (timeEl) timeEl.textContent = timeStr;
+            });
+        }
+        
+        updateClocks();
+        setInterval(updateClocks, 1000);
+    </script>
+</body>
+</html>
