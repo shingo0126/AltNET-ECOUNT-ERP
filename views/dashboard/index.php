@@ -72,6 +72,7 @@
     <div class="card">
         <div class="card-header">
             <h3><i class="fas fa-chart-bar" style="color:var(--cyan-accent)"></i> <?= e($year) ?>년 매출/매입 분석</h3>
+            <button class="btn btn-outline btn-sm" onclick="downloadChart('salesChart', '매출매입분석_<?= e($year) ?>')" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
         </div>
         <div class="card-body">
             <div class="chart-container">
@@ -82,6 +83,7 @@
     <div class="card">
         <div class="card-header">
             <h3><i class="fas fa-chart-area" style="color:var(--indigo)"></i> <?= e($year) ?>년 매출 등록 수량</h3>
+            <button class="btn btn-outline btn-sm" onclick="downloadChart('countChart', '매출등록수량_<?= e($year) ?>')" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
         </div>
         <div class="card-body">
             <div class="chart-container">
@@ -187,6 +189,7 @@
             <h3><i class="fas fa-building" style="color:var(--cyan-accent)"></i> 매출 업체 TOP 20</h3>
             <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-outline btn-sm" onclick="toggleDetail('company-detail')"><i class="fas fa-list"></i> 상세보기</button>
+                <button class="btn btn-outline btn-sm" onclick="downloadChart('topCompaniesChart', '매출업체TOP20_' + document.getElementById('topYear').value)" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
                 <a id="csvCompanyLink" href="?page=dashboard&action=exportCompanies&top_year=<?= e($topYear) ?>&top_view=<?= e($topView) ?>&top_month=<?= e($topMonth) ?>&top_quarter=<?= e($topQuarter) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
             </div>
         </div>
@@ -217,6 +220,7 @@
             <h3><i class="fas fa-truck" style="color:var(--amber-glow)"></i> 매입 업체 TOP 20</h3>
             <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-outline btn-sm" onclick="toggleDetail('vendor-detail')"><i class="fas fa-list"></i> 상세보기</button>
+                <button class="btn btn-outline btn-sm" onclick="downloadChart('topVendorsChart', '매입업체TOP20_' + document.getElementById('topYear').value)" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
                 <a id="csvVendorLink" href="?page=dashboard&action=exportVendors&top_year=<?= e($topYear) ?>&top_view=<?= e($topView) ?>&top_month=<?= e($topMonth) ?>&top_quarter=<?= e($topQuarter) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
             </div>
         </div>
@@ -411,6 +415,25 @@ function updateDetailTable(tbodyId, dataArr) {
     tbody.innerHTML = html;
 }
 function escapeHtml(str) { var div = document.createElement('div'); div.appendChild(document.createTextNode(str || '')); return div.innerHTML; }
+
+// ===== 차트 PNG 다운로드 =====
+function downloadChart(canvasId, fileName) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) { alert('차트가 존재하지 않습니다.'); return; }
+    // 고해상도 배경 포함 PNG 생성
+    var w = canvas.width, h = canvas.height;
+    var tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width = w; tmpCanvas.height = h;
+    var ctx = tmpCanvas.getContext('2d');
+    // 다크 배경 칠하기
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(canvas, 0, 0);
+    var link = document.createElement('a');
+    link.download = (fileName || 'chart') + '.png';
+    link.href = tmpCanvas.toDataURL('image/png', 1.0);
+    link.click();
+}
 JS;
 ?>
 

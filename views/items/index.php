@@ -81,6 +81,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         <h3><i class="fas fa-sort-amount-down" style="color:var(--indigo)"></i> 판매 수량 TOP 15</h3>
         <div class="d-flex gap-2">
             <button class="btn btn-outline btn-sm" onclick="toggleDetail('qty-detail')"><i class="fas fa-list"></i> 상세보기</button>
+            <button class="btn btn-outline btn-sm" onclick="downloadChart('top15QtyChart', '판매수량TOP15')" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
             <a href="?page=items&action=exportStatsQty" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
         </div>
     </div>
@@ -118,6 +119,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         <h3><i class="fas fa-won-sign" style="color:var(--cyan-accent)"></i> 매출 금액 TOP 15</h3>
         <div class="d-flex gap-2">
             <button class="btn btn-outline btn-sm" onclick="toggleDetail('amt-detail')"><i class="fas fa-list"></i> 상세보기</button>
+            <button class="btn btn-outline btn-sm" onclick="downloadChart('top15AmtChart', '매출금액TOP15')" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
             <a href="?page=items&action=exportStatsAmt" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
         </div>
     </div>
@@ -277,5 +279,22 @@ window.addEventListener('resize', function() {
         if (top15AmtChart) top15AmtChart.resize();
     }, 150);
 });
+
+// ===== 차트 PNG 다운로드 =====
+function downloadChart(canvasId, fileName) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) { alert('차트가 존재하지 않습니다.'); return; }
+    var w = canvas.width, h = canvas.height;
+    var tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width = w; tmpCanvas.height = h;
+    var ctx = tmpCanvas.getContext('2d');
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(canvas, 0, 0);
+    var link = document.createElement('a');
+    link.download = (fileName || 'chart') + '.png';
+    link.href = tmpCanvas.toDataURL('image/png', 1.0);
+    link.click();
+}
 JS;
 ?>
