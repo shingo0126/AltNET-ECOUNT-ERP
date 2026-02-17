@@ -329,6 +329,55 @@ class DashboardController {
     }
     
     /**
+     * 년도별 매출 비교 분석 CSV 다운로드
+     * GET ?page=dashboard&action=exportYearlyComparison&start_year=2025
+     */
+    public function exportYearlyComparison() {
+        $db = Database::getInstance();
+        $currentYear = (int)date('Y');
+        $startYear = max(2020, (int)getParam('start_year', $currentYear - 1));
+        
+        $result = [];
+        for ($y = $startYear; $y <= $currentYear; $y++) {
+            $monthly = array_fill(1, 12, 0);
+            $rows = $db->fetchAll(
+                "SELECT MONTH(sale_date) as m, COALESCE(SUM(total_amount),0) as total
+                 FROM sales WHERE YEAR(sale_date)=? AND is_deleted=0 
+                 GROUP BY MONTH(sale_date) ORDER BY m",
+                [$y]
+            );
+            foreach ($rows as $row) {
+                $monthly[(int)$row['m']] = (int)$row['total'];
+            }
+            $result[$y] = $monthly;
+        }
+        
+        AuditLog::log('EXPORT', 'sales', null, null, null, "년도별 매출 비교 분석 CSV 다운로드 ({$startYear}년~{$currentYear}년)");
+        
+        // CSV 헤더 행: 년도, 1월, 2월, ..., 12월, 합계
+        $headers = ['년도'];
+        for ($m = 1; $m <= 12; $m++) { $headers[] = $m . '월'; }
+        $headers[] = '합계';
+        
+        $csvRows = [];
+        $csvRows[] = ['조회기간', "{$startYear}년 ~ {$currentYear}년", '', '', '', '', '', '', '', '', '', '', '', ''];
+        $csvRows[] = array_fill(0, 14, '');
+        
+        foreach ($result as $y => $months) {
+            $row = [$y . '년'];
+            $yearTotal = 0;
+            for ($m = 1; $m <= 12; $m++) {
+                $row[] = number_format($months[$m]);
+                $yearTotal += $months[$m];
+            }
+            $row[] = number_format($yearTotal);
+            $csvRows[] = $row;
+        }
+        
+        csvExport("년도별매출비교_{$startYear}_{$currentYear}.csv", $headers, $csvRows);
+    }
+    
+    /**
      * 매출번호 생성 AJAX API
      */
     public function generateNumber() {

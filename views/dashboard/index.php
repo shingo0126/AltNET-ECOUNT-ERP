@@ -96,7 +96,7 @@
 <!-- 전년도 대비 매출 분석 -->
 <div class="card" style="margin-bottom:20px;">
     <div class="card-header">
-        <h3><i class="fas fa-chart-line" style="color:var(--emerald)"></i> 전년도 대비 매출 분석</h3>
+        <h3><i class="fas fa-chart-line" style="color:var(--emerald)"></i> 년도별 매출 비교 분석</h3>
         <div class="d-flex gap-2 flex-wrap align-center">
             <select id="compareStartYear" class="form-control" onchange="loadCompareChart()">
                 <?php for ($cy = $currentYear; $cy >= $currentYear - 5; $cy--): ?>
@@ -104,7 +104,8 @@
                 <?php endfor; ?>
             </select>
             <span class="badge badge-manager" id="comparePeriodBadge"><?= ($currentYear - 1) ?>년 ~ <?= $currentYear ?>년</span>
-            <button class="btn btn-outline btn-sm" onclick="downloadChart('compareChart', '전년도대비매출분석_' + document.getElementById('compareStartYear').value)" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
+            <button class="btn btn-outline btn-sm" onclick="downloadChart('compareChart', '년도별매출비교분석_' + document.getElementById('compareStartYear').value)" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
+            <a id="csvCompareLink" href="?page=dashboard&action=exportYearlyComparison&start_year=<?= ($currentYear - 1) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
         </div>
     </div>
     <div class="card-body">
@@ -486,17 +487,15 @@ function buildCompareChart(yearData) {
                 tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + fmtKRW(ctx.parsed.y || 0); } } },
                 datalabels: {
                     display: function(ctx) {
-                        var val = ctx.dataset.data[ctx.dataIndex];
-                        var max = Math.max.apply(null, ctx.dataset.data);
-                        return val > 0 && val === max;
+                        return ctx.dataset.data[ctx.dataIndex] > 0;
                     },
-                    anchor: 'end', align: 'top', offset: 6,
+                    anchor: 'end', align: 'top', offset: 4,
                     color: function(ctx) { return ctx.dataset.borderColor; },
-                    font: { size: 11, weight: 'bold' },
+                    font: { size: 10, weight: 'bold' },
                     formatter: function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR'); },
-                    backgroundColor: 'rgba(7,14,26,0.7)',
+                    backgroundColor: 'rgba(7,14,26,0.75)',
                     borderRadius: 4,
-                    padding: { top: 3, bottom: 3, left: 6, right: 6 }
+                    padding: { top: 2, bottom: 2, left: 5, right: 5 }
                 }
             },
             scales: {
@@ -513,6 +512,8 @@ document.getElementById('comparePeriodBadge').textContent = '$compareStartYearJs
 function loadCompareChart() {
     var startYear = document.getElementById('compareStartYear').value;
     document.getElementById('comparePeriodBadge').textContent = startYear + '년 ~ $currentYearJs년';
+    var csvLink = document.getElementById('csvCompareLink');
+    if (csvLink) csvLink.href = '?page=dashboard&action=exportYearlyComparison&start_year=' + startYear;
     fetch('?page=dashboard&action=yearlyComparison&start_year=' + startYear)
         .then(function(r) { return r.json(); })
         .then(function(data) { buildCompareChart(data.years); })
