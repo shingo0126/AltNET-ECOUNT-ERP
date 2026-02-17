@@ -93,6 +93,25 @@
     </div>
 </div>
 
+<!-- 전년도 대비 매출 분석 -->
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-line" style="color:var(--emerald)"></i> 전년도 대비 매출 분석</h3>
+        <div class="d-flex gap-2 flex-wrap align-center">
+            <select id="compareStartYear" class="form-control" onchange="loadCompareChart()">
+                <?php for ($cy = $currentYear; $cy >= $currentYear - 5; $cy--): ?>
+                <option value="<?= $cy ?>" <?= $cy == ($currentYear - 1) ? 'selected' : '' ?>><?= $cy ?>년부터</option>
+                <?php endfor; ?>
+            </select>
+            <span class="badge badge-manager" id="comparePeriodBadge"><?= ($currentYear - 1) ?>년 ~ <?= $currentYear ?>년</span>
+            <button class="btn btn-outline btn-sm" onclick="downloadChart('compareChart', '전년도대비매출분석_' + document.getElementById('compareStartYear').value)" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="chart-container" id="compareChartWrap"><canvas id="compareChart"></canvas></div>
+    </div>
+</div>
+
 <!-- 세금계산서 발행 요청 최근 5건 (요청 건만 표시) -->
 <div class="card" style="margin-bottom:20px;">
     <div class="card-header">
@@ -258,6 +277,9 @@ $quarterlyAmounts = json_encode(array_values($chartQuarterly));
 $monthlyPurchaseAmounts = json_encode(array_values($chartMonthlyPurchase));
 $quarterlyPurchaseAmounts = json_encode(array_values($chartQuarterlyPurchase));
 $countAmounts = json_encode(array_values($chartCounts));
+$compareDataJson = json_encode($compareData, JSON_UNESCAPED_UNICODE);
+$compareStartYearJs = $compareStartYear;
+$currentYearJs = $currentYear;
 $viewTypeJs = $viewType;
 
 $pageScript = <<<JS
@@ -418,6 +440,84 @@ function createVendorChart(names, totals) {
 
 createCompanyChart($companyNames, $companyTotals);
 createVendorChart($vendorNames, $vendorTotals);
+
+// ===== 전년도 대비 매출 분석 차트 =====
+var compareYearColors = [
+    { border: '#f59e0b', bg: 'rgba(245,158,11,.15)' },
+    { border: '#22d3ee', bg: 'rgba(34,211,238,.15)' },
+    { border: '#a78bfa', bg: 'rgba(167,139,250,.15)' },
+    { border: '#f43f5e', bg: 'rgba(244,63,94,.15)' },
+    { border: '#10b981', bg: 'rgba(16,185,129,.15)' },
+    { border: '#60a5fa', bg: 'rgba(96,165,250,.15)' }
+];
+var compareChart = null;
+
+function buildCompareChart(yearData) {
+    var labels = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    var datasets = [];
+    var sortedYears = Object.keys(yearData).sort();
+    sortedYears.forEach(function(yr, idx) {
+        var color = compareYearColors[idx % compareYearColors.length];
+        datasets.push({
+            label: yr + '년',
+            data: yearData[yr],
+            borderColor: color.border,
+            backgroundColor: color.bg,
+            fill: false,
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: color.border,
+            pointHoverRadius: 8,
+            borderWidth: 2.5
+        });
+    });
+    if (compareChart) { compareChart.destroy(); compareChart = null; }
+    var el = document.getElementById('compareChart');
+    if (!el) return;
+    compareChart = new Chart(el, {
+        type: 'line',
+        data: { labels: labels, datasets: datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            layout: { padding: { top: 30 } },
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { boxWidth: 14, padding: 18, font: { size: 13, weight: '600' }, usePointStyle: true, pointStyle: 'circle' } },
+                tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + fmtKRW(ctx.parsed.y || 0); } } },
+                datalabels: {
+                    display: function(ctx) {
+                        var val = ctx.dataset.data[ctx.dataIndex];
+                        var max = Math.max.apply(null, ctx.dataset.data);
+                        return val > 0 && val === max;
+                    },
+                    anchor: 'end', align: 'top', offset: 6,
+                    color: function(ctx) { return ctx.dataset.borderColor; },
+                    font: { size: 11, weight: 'bold' },
+                    formatter: function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR'); },
+                    backgroundColor: 'rgba(7,14,26,0.7)',
+                    borderRadius: 4,
+                    padding: { top: 3, bottom: 3, left: 6, right: 6 }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, grace: '15%', ticks: { callback: function(v) { return (v/10000).toLocaleString() + '만'; } } }
+            }
+        }
+    });
+}
+
+// 초기 렌더링 (서버에서 전달받은 데이터)
+buildCompareChart($compareDataJson);
+document.getElementById('comparePeriodBadge').textContent = '$compareStartYearJs년 ~ $currentYearJs년';
+
+function loadCompareChart() {
+    var startYear = document.getElementById('compareStartYear').value;
+    document.getElementById('comparePeriodBadge').textContent = startYear + '년 ~ $currentYearJs년';
+    fetch('?page=dashboard&action=yearlyComparison&start_year=' + startYear)
+        .then(function(r) { return r.json(); })
+        .then(function(data) { buildCompareChart(data.years); })
+        .catch(function(err) { console.error('전년도 대비 매출 데이터 로드 실패:', err); });
+}
 
 // ===== TOP20 독립 필터 핸들러 =====
 function getTopFilterParams() {

@@ -75,29 +75,72 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
     </div>
 </div>
 
+<!-- TOP 15 필터 바 -->
+<div class="card mt-3" style="margin-bottom:0;">
+    <div class="card-body" style="padding:12px 20px;">
+        <div class="d-flex gap-2 flex-wrap align-center">
+            <span style="font-weight:600;color:var(--text-primary);margin-right:8px;white-space:nowrap;">
+                <i class="fas fa-filter" style="color:var(--cyan-accent)"></i> TOP 15 조회 기간
+            </span>
+            <div class="form-group mb-0">
+                <select id="statsYear" class="form-control" onchange="onStatsFilterChange()">
+                    <?php foreach ($statsYears as $sy): ?>
+                    <option value="<?= $sy['y'] ?>" <?= $sy['y'] == $statsYear ? 'selected' : '' ?>><?= $sy['y'] ?>년</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group mb-0">
+                <select id="statsView" class="form-control" onchange="onStatsViewChange()">
+                    <option value="yearly" <?= $statsView === 'yearly' ? 'selected' : '' ?>>년도 전체</option>
+                    <option value="quarterly" <?= $statsView === 'quarterly' ? 'selected' : '' ?>>분기별</option>
+                    <option value="monthly" <?= $statsView === 'monthly' ? 'selected' : '' ?>>월별</option>
+                </select>
+            </div>
+            <div class="form-group mb-0" id="statsQuarterWrap" style="display:<?= $statsView === 'quarterly' ? 'block' : 'none' ?>;">
+                <select id="statsQuarter" class="form-control" onchange="onStatsFilterChange()">
+                    <option value="1" <?= $statsQuarter == '1' ? 'selected' : '' ?>>1분기 (1~3월)</option>
+                    <option value="2" <?= $statsQuarter == '2' ? 'selected' : '' ?>>2분기 (4~6월)</option>
+                    <option value="3" <?= $statsQuarter == '3' ? 'selected' : '' ?>>3분기 (7~9월)</option>
+                    <option value="4" <?= $statsQuarter == '4' ? 'selected' : '' ?>>4분기 (10~12월)</option>
+                </select>
+            </div>
+            <div class="form-group mb-0" id="statsMonthWrap" style="display:<?= $statsView === 'monthly' ? 'block' : 'none' ?>;">
+                <select id="statsMonth" class="form-control" onchange="onStatsFilterChange()">
+                    <?php for ($m = 1; $m <= 12; $m++): ?>
+                    <option value="<?= $m ?>" <?= $m == $statsMonth ? 'selected' : '' ?>><?= $m ?>월</option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+            <span id="statsPeriodBadge" class="badge badge-manager" style="margin-left:8px;"><?= e($statsPeriodLabel) ?></span>
+        </div>
+    </div>
+</div>
+
 <!-- TOP 15 By Quantity -->
 <div class="card mt-3">
     <div class="card-header">
         <h3><i class="fas fa-sort-amount-down" style="color:var(--indigo)"></i> 판매 수량 TOP 15</h3>
         <div class="d-flex gap-2">
             <button class="btn btn-outline btn-sm" onclick="toggleDetail('qty-detail')"><i class="fas fa-list"></i> 상세보기</button>
-            <button class="btn btn-outline btn-sm" onclick="downloadChart('top15QtyChart', '판매수량TOP15')" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
-            <a href="?page=items&action=exportStatsQty" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
+            <button class="btn btn-outline btn-sm" onclick="downloadChart('top15QtyChart', '판매수량TOP15_' + document.getElementById('statsYear').value)" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
+            <a id="csvQtyLink" href="?page=items&action=exportStatsQty&stats_year=<?= e($statsYear) ?>&stats_view=<?= e($statsView) ?>&stats_month=<?= e($statsMonth) ?>&stats_quarter=<?= e($statsQuarter) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
         </div>
     </div>
     <div class="card-body">
+        <div id="qtyChartWrap">
         <?php if (empty($top15Qty) || array_sum(array_column($top15Qty, 'total_quantity')) == 0): ?>
             <div class="empty-state"><i class="fas fa-chart-bar"></i><h4>판매 수량 데이터가 없습니다</h4></div>
         <?php else: ?>
         <div class="chart-container top15"><canvas id="top15QtyChart"></canvas></div>
         <?php endif; ?>
+        </div>
         
         <!-- Detail list (hidden by default) -->
         <div id="qty-detail" style="display:none;margin-top:16px;">
             <div class="table-responsive">
                 <table class="data-table">
                     <thead><tr><th>순위</th><th>제품 코드</th><th class="text-right">판매 수량</th><th class="text-right">매출 금액</th></tr></thead>
-                    <tbody>
+                    <tbody id="qtyDetailBody">
                         <?php foreach ($allByQty as $rank => $s): ?>
                         <tr>
                             <td><strong><?= $rank + 1 ?></strong></td>
@@ -119,23 +162,25 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         <h3><i class="fas fa-won-sign" style="color:var(--cyan-accent)"></i> 매출 금액 TOP 15</h3>
         <div class="d-flex gap-2">
             <button class="btn btn-outline btn-sm" onclick="toggleDetail('amt-detail')"><i class="fas fa-list"></i> 상세보기</button>
-            <button class="btn btn-outline btn-sm" onclick="downloadChart('top15AmtChart', '매출금액TOP15')" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
-            <a href="?page=items&action=exportStatsAmt" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
+            <button class="btn btn-outline btn-sm" onclick="downloadChart('top15AmtChart', '매출금액TOP15_' + document.getElementById('statsYear').value)" title="PNG 다운로드"><i class="fas fa-download"></i> PNG</button>
+            <a id="csvAmtLink" href="?page=items&action=exportStatsAmt&stats_year=<?= e($statsYear) ?>&stats_view=<?= e($statsView) ?>&stats_month=<?= e($statsMonth) ?>&stats_quarter=<?= e($statsQuarter) ?>" class="btn btn-success btn-sm"><i class="fas fa-file-csv"></i> CSV</a>
         </div>
     </div>
     <div class="card-body">
+        <div id="amtChartWrap">
         <?php if (empty($top15Amt) || array_sum(array_column($top15Amt, 'total_amount')) == 0): ?>
             <div class="empty-state"><i class="fas fa-chart-bar"></i><h4>매출 금액 데이터가 없습니다</h4></div>
         <?php else: ?>
         <div class="chart-container top15"><canvas id="top15AmtChart"></canvas></div>
         <?php endif; ?>
+        </div>
         
         <!-- Detail list (hidden by default) -->
         <div id="amt-detail" style="display:none;margin-top:16px;">
             <div class="table-responsive">
                 <table class="data-table">
                     <thead><tr><th>순위</th><th>제품 코드</th><th class="text-right">판매 수량</th><th class="text-right">매출 금액</th></tr></thead>
-                    <tbody>
+                    <tbody id="amtDetailBody">
                         <?php foreach ($allByAmt as $rank => $s): ?>
                         <tr>
                             <td><strong><?= $rank + 1 ?></strong></td>
@@ -314,5 +359,126 @@ function downloadChart(canvasId, fileName) {
     link.href = tmpCanvas.toDataURL('image/png', 1.0);
     link.click();
 }
+
+// ===== TOP15 필터 핸들러 =====
+function getStatsParams() {
+    return {
+        stats_year: document.getElementById('statsYear').value,
+        stats_view: document.getElementById('statsView').value,
+        stats_month: document.getElementById('statsMonth').value,
+        stats_quarter: document.getElementById('statsQuarter').value
+    };
+}
+
+function onStatsViewChange() {
+    var v = document.getElementById('statsView').value;
+    document.getElementById('statsQuarterWrap').style.display = v === 'quarterly' ? 'block' : 'none';
+    document.getElementById('statsMonthWrap').style.display = v === 'monthly' ? 'block' : 'none';
+    onStatsFilterChange();
+}
+
+function onStatsFilterChange() {
+    var p = getStatsParams();
+    var qs = 'page=items&action=itemStatsData&stats_year=' + p.stats_year + '&stats_view=' + p.stats_view + '&stats_month=' + p.stats_month + '&stats_quarter=' + p.stats_quarter;
+    
+    // CSV 링크 업데이트
+    var csvBase = '?page=items&stats_year=' + p.stats_year + '&stats_view=' + p.stats_view + '&stats_month=' + p.stats_month + '&stats_quarter=' + p.stats_quarter;
+    var qtyLink = document.getElementById('csvQtyLink');
+    var amtLink = document.getElementById('csvAmtLink');
+    if (qtyLink) qtyLink.href = csvBase + '&action=exportStatsQty';
+    if (amtLink) amtLink.href = csvBase + '&action=exportStatsAmt';
+    
+    fetch('?' + qs).then(function(r) { return r.json(); }).then(function(data) {
+        document.getElementById('statsPeriodBadge').textContent = data.periodLabel;
+        rebuildQtyChart(data.top15Qty);
+        rebuildAmtChart(data.top15Amt);
+        rebuildDetailTable('qtyDetailBody', data.allByQty, 'qty');
+        rebuildDetailTable('amtDetailBody', data.allByAmt, 'amt');
+    }).catch(function(err) { console.error('TOP15 필터 데이터 로드 실패:', err); });
+}
+
+function rebuildQtyChart(items) {
+    var wrap = document.getElementById('qtyChartWrap');
+    if (!items || items.length === 0 || items.every(function(d) { return d.qty === 0; })) {
+        wrap.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><h4>판매 수량 데이터가 없습니다</h4></div>';
+        top15QtyChart = null; return;
+    }
+    wrap.innerHTML = '<div class="chart-container top15"><canvas id="top15QtyChart"></canvas></div>';
+    var names = items.map(function(d) { return d.code; });
+    var values = items.map(function(d) { return d.qty; });
+    var maxVal = Math.max.apply(null, values);
+    top15QtyChart = new Chart(document.getElementById('top15QtyChart'), {
+        type: 'bar',
+        data: { labels: names, datasets: [{ label: '판매 수량', data: values, backgroundColor: 'rgba(99,102,241,.6)', borderRadius: 3 }] },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 55 } },
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#a5b4fc', font: { size: 11, weight: 'bold' },
+                    formatter: function(v) { return v.toLocaleString('ko-KR') + '개'; }
+                }
+            },
+            scales: {
+                y: { ticks: { font: { size: 12, weight: 'bold' }, color: '#e2e8f0', autoSkip: false, padding: 6 } },
+                x: { beginAtZero: true, suggestedMax: maxVal * 1.18 }
+            }
+        }
+    });
+}
+
+function rebuildAmtChart(items) {
+    var wrap = document.getElementById('amtChartWrap');
+    if (!items || items.length === 0 || items.every(function(d) { return d.amt === 0; })) {
+        wrap.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><h4>매출 금액 데이터가 없습니다</h4></div>';
+        top15AmtChart = null; return;
+    }
+    wrap.innerHTML = '<div class="chart-container top15"><canvas id="top15AmtChart"></canvas></div>';
+    var names = items.map(function(d) { return d.code; });
+    var values = items.map(function(d) { return d.amt; });
+    var maxVal = Math.max.apply(null, values);
+    top15AmtChart = new Chart(document.getElementById('top15AmtChart'), {
+        type: 'bar',
+        data: { labels: names, datasets: [{ label: '매출 금액', data: values, backgroundColor: 'rgba(37,99,235,.55)', borderRadius: 3 }] },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 65 } },
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#93c5fd', font: { size: 10, weight: 'bold' },
+                    formatter: function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR') + '원'; }
+                }
+            },
+            scales: {
+                y: { ticks: { font: { size: 12, weight: 'bold' }, color: '#e2e8f0', autoSkip: false, padding: 6 } },
+                x: { beginAtZero: true, suggestedMax: maxVal * 1.18, ticks: { callback: function(v) { return (v/10000).toLocaleString() + '만'; } } }
+            }
+        }
+    });
+}
+
+function rebuildDetailTable(tbodyId, items, type) {
+    var tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    if (!items || items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">데이터가 없습니다</td></tr>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+        var d = items[i];
+        html += '<tr><td><strong>' + (i+1) + '</strong></td><td>' + escapeHtml(d.code) + '</td>';
+        html += '<td class="text-right">' + d.qty.toLocaleString() + '</td>';
+        html += '<td class="money">' + new Intl.NumberFormat('ko-KR').format(d.amt) + '원</td></tr>';
+    }
+    tbody.innerHTML = html;
+}
+function escapeHtml(str) { var div = document.createElement('div'); div.appendChild(document.createTextNode(str || '')); return div.innerHTML; }
 JS;
 ?>

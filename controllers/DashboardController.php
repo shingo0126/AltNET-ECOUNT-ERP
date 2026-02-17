@@ -127,6 +127,20 @@ class DashboardController {
              LIMIT 5"
         );
         
+        // ===== 전년도 대비 매출 분석 초기 데이터 (현재년도 + 전년도) =====
+        $compareStartYear = $currentYear - 1;
+        $compareData = [];
+        for ($cy = $compareStartYear; $cy <= $currentYear; $cy++) {
+            $cMonthly = array_fill(1, 12, 0);
+            $cRows = $db->fetchAll(
+                "SELECT MONTH(sale_date) as m, COALESCE(SUM(total_amount),0) as total
+                 FROM sales WHERE YEAR(sale_date)=? AND is_deleted=0 GROUP BY MONTH(sale_date) ORDER BY m",
+                [$cy]
+            );
+            foreach ($cRows as $cr) { $cMonthly[(int)$cr['m']] = (int)$cr['total']; }
+            $compareData[(string)$cy] = array_values($cMonthly);
+        }
+        
         $pageTitle = '대시보드';
         
         // Prepare chart data - 매출
@@ -280,6 +294,38 @@ class DashboardController {
             $suffix = "{$topYear}_전체";
         }
         return ['filename' => "{$prefix}_{$suffix}.csv"];
+    }
+    
+    /**
+     * 전년도 대비 매출 분석 AJAX API
+     * GET ?page=dashboard&action=yearlyComparison&start_year=2025
+     * 응답: { years: { "2025": [0,9000000,...], "2026": [...] }, currentYear: 2026 }
+     */
+    public function yearlyComparison() {
+        $db = Database::getInstance();
+        $currentYear = (int)date('Y');
+        $startYear = max(2020, (int)getParam('start_year', $currentYear - 1));
+        
+        $result = [];
+        for ($y = $startYear; $y <= $currentYear; $y++) {
+            $monthly = array_fill(1, 12, 0);
+            $rows = $db->fetchAll(
+                "SELECT MONTH(sale_date) as m, COALESCE(SUM(total_amount),0) as total
+                 FROM sales WHERE YEAR(sale_date)=? AND is_deleted=0 
+                 GROUP BY MONTH(sale_date) ORDER BY m",
+                [$y]
+            );
+            foreach ($rows as $row) {
+                $monthly[(int)$row['m']] = (int)$row['total'];
+            }
+            $result[(string)$y] = array_values($monthly);
+        }
+        
+        jsonResponse([
+            'years' => $result,
+            'currentYear' => $currentYear,
+            'startYear' => $startYear
+        ]);
     }
     
     /**

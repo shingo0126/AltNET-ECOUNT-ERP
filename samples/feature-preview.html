@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>신규 기능 미리보기 - AltNET ECOUNT ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        :root {
+            --bg-deep: #070e1a;
+            --bg-surface: rgba(255,255,255,0.04);
+            --blue-primary: #2563eb;
+            --cyan-accent: #22d3ee;
+            --indigo: #6366f1;
+            --amber-glow: #f59e0b;
+            --emerald: #10b981;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --radius: 16px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .page-title {
+            font-size: 22px; font-weight: 700; margin-bottom: 24px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .page-title i { color: var(--cyan-accent); }
+        .section-title {
+            font-size: 16px; font-weight: 600; margin: 32px 0 12px;
+            color: var(--cyan-accent); display: flex; align-items: center; gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 8px;
+        }
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 20px;
+            backdrop-filter: blur(12px);
+        }
+        .card-header {
+            padding: 14px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .card-header h3 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .card-body { padding: 16px 20px; }
+        .chart-container { position: relative; height: 380px; }
+        .chart-container.top15 { height: 420px; }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+        }
+        .filter-bar label {
+            font-size: 13px; font-weight: 600; color: var(--text-secondary);
+            white-space: nowrap; display: flex; align-items: center; gap: 6px;
+        }
+        .filter-bar label i { color: var(--cyan-accent); font-size: 12px; }
+        .form-select {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 6px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            outline: none;
+            transition: border-color .2s;
+        }
+        .form-select:focus { border-color: var(--cyan-accent); }
+        .form-select option { background: #1e293b; color: #f1f5f9; }
+
+        .btn {
+            padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px;
+            transition: all .2s;
+        }
+        .btn-outline {
+            background: transparent; border: 1px solid rgba(255,255,255,0.12); color: var(--text-secondary);
+        }
+        .btn-outline:hover { border-color: var(--cyan-accent); color: var(--cyan-accent); }
+        .btn-success { background: rgba(16,185,129,0.15); color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); }
+
+        .badge { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 12px;
+            background: rgba(34,211,238,0.12); color: var(--cyan-accent); }
+
+        /* Detail Table */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .data-table th { padding: 10px; text-align: left; color: var(--text-muted); font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 12px; }
+        .data-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .money { text-align: right; font-variant-numeric: tabular-nums; }
+        .text-right { text-align: right; }
+        .d-flex { display: flex; } .gap-2 { gap: 8px; } .flex-wrap { flex-wrap: wrap; }
+
+        /* Year Color Legend inside chart */
+        .year-colors {
+            display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+            font-size: 12px; color: var(--text-secondary);
+        }
+        .year-colors .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    </style>
+</head>
+<body>
+    <div class="page-title"><i class="fas fa-eye"></i> 신규 기능 미리보기 (Sample)</div>
+
+    <!-- ============================== -->
+    <!-- SECTION 1: 전년도 대비 매출 분석 -->
+    <!-- ============================== -->
+    <div class="section-title"><i class="fas fa-chart-line"></i> 기능 1: 전년도 대비 매출 분석 (대시보드 페이지)</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+        매출/매입 분석 차트 바로 아래에 추가됩니다. 선택한 년도부터 현재 년도까지 월별 매출을 꺽은선 그래프로 비교합니다.
+    </p>
+
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-line" style="color:var(--emerald)"></i> 전년도 대비 매출 분석</h3>
+            <div class="d-flex gap-2">
+                <select id="compareYear" class="form-select" onchange="updateCompareChart()">
+                    <option value="2024">2024년부터</option>
+                    <option value="2025" selected>2025년부터</option>
+                </select>
+                <span class="badge" id="compareBadge">2025년 ~ 2026년</span>
+                <button class="btn btn-outline" onclick="downloadChart('compareChart', '전년도대비매출분석')"><i class="fas fa-download"></i> PNG</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="chart-container"><canvas id="compareChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ============================== -->
+    <!-- SECTION 2: 판매 제품코드 필터 -->
+    <!-- ============================== -->
+    <div class="section-title"><i class="fas fa-filter"></i> 기능 2: 판매 제품코드 TOP 15 필터 (판매 제품 코드 페이지)</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+        판매 수량 TOP 15 / 매출 금액 TOP 15 차트에 년도별/분기별/월별 필터가 추가됩니다.
+    </p>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <label><i class="fas fa-filter"></i> TOP 15 조회 기간</label>
+        <select id="itemYear" class="form-select" onchange="updateItemCharts()">
+            <option value="2025">2025년</option>
+            <option value="2026" selected>2026년</option>
+        </select>
+        <select id="itemView" class="form-select" onchange="onItemViewChange()">
+            <option value="yearly" selected>년도 전체</option>
+            <option value="quarterly">분기별</option>
+            <option value="monthly">월별</option>
+        </select>
+        <select id="itemQuarter" class="form-select" style="display:none;" onchange="updateItemCharts()">
+            <option value="1">1분기 (1~3월)</option>
+            <option value="2">2분기 (4~6월)</option>
+            <option value="3">3분기 (7~9월)</option>
+            <option value="4">4분기 (10~12월)</option>
+        </select>
+        <select id="itemMonth" class="form-select" style="display:none;" onchange="updateItemCharts()">
+            <option value="1">1월</option><option value="2" selected>2월</option>
+            <option value="3">3월</option><option value="4">4월</option>
+            <option value="5">5월</option><option value="6">6월</option>
+            <option value="7">7월</option><option value="8">8월</option>
+            <option value="9">9월</option><option value="10">10월</option>
+            <option value="11">11월</option><option value="12">12월</option>
+        </select>
+        <span class="badge" id="itemPeriodBadge">2026년 전체</span>
+    </div>
+
+    <!-- TOP 15 수량 Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-sort-amount-down" style="color:var(--indigo)"></i> 판매 수량 TOP 15</h3>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline" onclick="toggleEl('qtyDetail')"><i class="fas fa-list"></i> 상세보기</button>
+                <button class="btn btn-outline" onclick="downloadChart('sampleQtyChart', '판매수량TOP15')"><i class="fas fa-download"></i> PNG</button>
+                <button class="btn btn-success"><i class="fas fa-file-csv"></i> CSV</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="chart-container top15"><canvas id="sampleQtyChart"></canvas></div>
+            <div id="qtyDetail" style="display:none;margin-top:16px;">
+                <table class="data-table">
+                    <thead><tr><th>순위</th><th>제품 코드</th><th class="text-right">판매 수량</th><th class="text-right">매출 금액</th></tr></thead>
+                    <tbody id="qtyDetailBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP 15 금액 Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-won-sign" style="color:var(--cyan-accent)"></i> 매출 금액 TOP 15</h3>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline" onclick="toggleEl('amtDetail')"><i class="fas fa-list"></i> 상세보기</button>
+                <button class="btn btn-outline" onclick="downloadChart('sampleAmtChart', '매출금액TOP15')"><i class="fas fa-download"></i> PNG</button>
+                <button class="btn btn-success"><i class="fas fa-file-csv"></i> CSV</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="chart-container top15"><canvas id="sampleAmtChart"></canvas></div>
+            <div id="amtDetail" style="display:none;margin-top:16px;">
+                <table class="data-table">
+                    <thead><tr><th>순위</th><th>제품 코드</th><th class="text-right">판매 수량</th><th class="text-right">매출 금액</th></tr></thead>
+                    <tbody id="amtDetailBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ===== Chart.js Setup =====
+Chart.register(ChartDataLabels);
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.set('plugins.datalabels', { display: false });
+
+var fmtKRW = function(v) { return new Intl.NumberFormat('ko-KR').format(v) + '원'; };
+var fmtMan = function(v) { return v >= 10000 ? (v/10000).toLocaleString('ko-KR', {maximumFractionDigits:0}) + '만' : v.toLocaleString('ko-KR'); };
+
+// ===== Sample Data =====
+var sampleData = {
+    // 전년도 대비 매출 분석 - 월별 매출 데이터
+    yearly: {
+        2024: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        2025: [0, 9000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        2026: [0, 31900000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    // 제품코드별 TOP15 샘플 (년도/기간별)
+    items: {
+        '2026_yearly': {
+            qty: [
+                { code: '1.임베디드 모듈', qty: 12, amt: 23100000 },
+                { code: '3.파워서플라이', qty: 8, amt: 9600000 },
+                { code: '2.하드웨어 판매', qty: 5, amt: 7500000 },
+                { code: '4.소프트웨어', qty: 3, amt: 4500000 },
+                { code: '5.유지보수', qty: 2, amt: 1800000 }
+            ],
+            amt: [
+                { code: '1.임베디드 모듈', qty: 12, amt: 23100000 },
+                { code: '3.파워서플라이', qty: 8, amt: 9600000 },
+                { code: '2.하드웨어 판매', qty: 5, amt: 7500000 },
+                { code: '4.소프트웨어', qty: 3, amt: 4500000 },
+                { code: '5.유지보수', qty: 2, amt: 1800000 }
+            ]
+        },
+        '2026_Q1': {
+            qty: [
+                { code: '1.임베디드 모듈', qty: 9, amt: 16200000 },
+                { code: '3.파워서플라이', qty: 5, amt: 6000000 },
+                { code: '2.하드웨어 판매', qty: 3, amt: 4500000 }
+            ],
+            amt: [
+                { code: '1.임베디드 모듈', qty: 9, amt: 16200000 },
+                { code: '3.파워서플라이', qty: 5, amt: 6000000 },
+                { code: '2.하드웨어 판매', qty: 3, amt: 4500000 }
+            ]
+        },
+        '2026_M2': {
+            qty: [
+                { code: '1.임베디드 모듈', qty: 9, amt: 16200000 },
+                { code: '3.파워서플라이', qty: 5, amt: 6000000 },
+                { code: '2.하드웨어 판매', qty: 3, amt: 4500000 }
+            ],
+            amt: [
+                { code: '1.임베디드 모듈', qty: 9, amt: 16200000 },
+                { code: '3.파워서플라이', qty: 5, amt: 6000000 },
+                { code: '2.하드웨어 판매', qty: 3, amt: 4500000 }
+            ]
+        },
+        '2025_yearly': {
+            qty: [{ code: '1.임베디드 모듈', qty: 5, amt: 9000000 }],
+            amt: [{ code: '1.임베디드 모듈', qty: 5, amt: 9000000 }]
+        }
+    }
+};
+
+// ===== Year Color Palette =====
+var yearColors = [
+    { border: '#f59e0b', bg: 'rgba(245,158,11,.2)' },    // amber
+    { border: '#22d3ee', bg: 'rgba(34,211,238,.2)' },     // cyan
+    { border: '#a78bfa', bg: 'rgba(167,139,250,.2)' },    // violet
+    { border: '#f43f5e', bg: 'rgba(244,63,94,.2)' },      // rose
+    { border: '#10b981', bg: 'rgba(16,185,129,.2)' }      // emerald
+];
+
+// ============================
+// 기능 1: 전년도 대비 매출 분석
+// ============================
+var compareChart = null;
+function updateCompareChart() {
+    var startYear = parseInt(document.getElementById('compareYear').value);
+    var currentYear = 2026; // 실제 구현에서는 서버에서 전달
+    var labels = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    var datasets = [];
+
+    for (var y = startYear; y <= currentYear; y++) {
+        var idx = y - startYear;
+        var color = yearColors[idx % yearColors.length];
+        var data = sampleData.yearly[y] || new Array(12).fill(0);
+        datasets.push({
+            label: y + '년',
+            data: data,
+            borderColor: color.border,
+            backgroundColor: color.bg,
+            fill: false,
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: color.border,
+            pointHoverRadius: 8,
+            borderWidth: 2.5
+        });
+    }
+
+    document.getElementById('compareBadge').textContent = startYear + '년 ~ ' + currentYear + '년';
+
+    if (compareChart) compareChart.destroy();
+    compareChart = new Chart(document.getElementById('compareChart'), {
+        type: 'line',
+        data: { labels: labels, datasets: datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            layout: { padding: { top: 30 } },
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { boxWidth: 14, padding: 18, font: { size: 13, weight: '600' }, usePointStyle: true, pointStyle: 'circle' } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return ctx.dataset.label + ': ' + fmtKRW(ctx.parsed.y || 0); }
+                    }
+                },
+                datalabels: {
+                    display: function(ctx) {
+                        var val = ctx.dataset.data[ctx.dataIndex];
+                        // 최고점에만 표시
+                        var max = Math.max.apply(null, ctx.dataset.data);
+                        return val > 0 && val === max;
+                    },
+                    anchor: 'end', align: 'top', offset: 6,
+                    color: function(ctx) { return ctx.dataset.borderColor; },
+                    font: { size: 11, weight: 'bold' },
+                    formatter: function(v) { return fmtMan(v); },
+                    backgroundColor: 'rgba(7,14,26,0.7)',
+                    borderRadius: 4,
+                    padding: { top: 3, bottom: 3, left: 6, right: 6 }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true, grace: '15%',
+                    ticks: { callback: function(v) { return (v/10000).toLocaleString() + '만'; } }
+                }
+            }
+        }
+    });
+}
+updateCompareChart();
+
+// ============================
+// 기능 2: 제품코드 TOP15 필터
+// ============================
+var sampleQtyChart = null;
+var sampleAmtChart = null;
+
+function getItemFilterKey() {
+    var year = document.getElementById('itemYear').value;
+    var view = document.getElementById('itemView').value;
+    if (view === 'quarterly') {
+        var q = document.getElementById('itemQuarter').value;
+        return year + '_Q' + q;
+    } else if (view === 'monthly') {
+        var m = document.getElementById('itemMonth').value;
+        return year + '_M' + m;
+    }
+    return year + '_yearly';
+}
+
+function getItemPeriodLabel() {
+    var year = document.getElementById('itemYear').value;
+    var view = document.getElementById('itemView').value;
+    if (view === 'quarterly') {
+        var qNames = ['', '1분기(1~3월)', '2분기(4~6월)', '3분기(7~9월)', '4분기(10~12월)'];
+        return year + '년 ' + qNames[document.getElementById('itemQuarter').value];
+    } else if (view === 'monthly') {
+        return year + '년 ' + document.getElementById('itemMonth').value + '월';
+    }
+    return year + '년 전체';
+}
+
+function onItemViewChange() {
+    var v = document.getElementById('itemView').value;
+    document.getElementById('itemQuarter').style.display = v === 'quarterly' ? 'inline-block' : 'none';
+    document.getElementById('itemMonth').style.display = v === 'monthly' ? 'inline-block' : 'none';
+    updateItemCharts();
+}
+
+function updateItemCharts() {
+    var key = getItemFilterKey();
+    var data = sampleData.items[key] || sampleData.items['2026_yearly'];
+    document.getElementById('itemPeriodBadge').textContent = getItemPeriodLabel();
+
+    // Qty Chart
+    var qtyNames = data.qty.map(function(d) { return d.code; });
+    var qtyValues = data.qty.map(function(d) { return d.qty; });
+    var qtyMax = qtyValues.length > 0 ? Math.max.apply(null, qtyValues) : 1;
+
+    if (sampleQtyChart) sampleQtyChart.destroy();
+    sampleQtyChart = new Chart(document.getElementById('sampleQtyChart'), {
+        type: 'bar',
+        data: { labels: qtyNames, datasets: [{ label: '판매 수량', data: qtyValues, backgroundColor: 'rgba(99,102,241,.6)', borderRadius: 3 }] },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 55 } },
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#a5b4fc', font: { size: 11, weight: 'bold' },
+                    formatter: function(v) { return v.toLocaleString('ko-KR') + '개'; }
+                }
+            },
+            scales: {
+                y: { ticks: { font: { size: 12, weight: 'bold' }, color: '#e2e8f0', autoSkip: false, padding: 6 } },
+                x: { beginAtZero: true, suggestedMax: qtyMax * 1.18 }
+            }
+        }
+    });
+
+    // Amt Chart
+    var amtNames = data.amt.map(function(d) { return d.code; });
+    var amtValues = data.amt.map(function(d) { return d.amt; });
+    var amtMax = amtValues.length > 0 ? Math.max.apply(null, amtValues) : 1;
+
+    if (sampleAmtChart) sampleAmtChart.destroy();
+    sampleAmtChart = new Chart(document.getElementById('sampleAmtChart'), {
+        type: 'bar',
+        data: { labels: amtNames, datasets: [{ label: '매출 금액', data: amtValues, backgroundColor: 'rgba(37,99,235,.55)', borderRadius: 3 }] },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 65 } },
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#93c5fd', font: { size: 10, weight: 'bold' },
+                    formatter: function(v) { return fmtMan(v); }
+                }
+            },
+            scales: {
+                y: { ticks: { font: { size: 12, weight: 'bold' }, color: '#e2e8f0', autoSkip: false, padding: 6 } },
+                x: { beginAtZero: true, suggestedMax: amtMax * 1.18, ticks: { callback: function(v) { return (v/10000).toLocaleString() + '만'; } } }
+            }
+        }
+    });
+
+    // Detail Tables
+    updateDetailTable('qtyDetailBody', data.qty, 'qty');
+    updateDetailTable('amtDetailBody', data.amt, 'amt');
+}
+
+function updateDetailTable(tbodyId, items, type) {
+    var tbody = document.getElementById(tbodyId);
+    var html = '';
+    items.forEach(function(d, i) {
+        html += '<tr><td><strong>' + (i+1) + '</strong></td><td>' + d.code + '</td>';
+        html += '<td class="text-right">' + d.qty.toLocaleString() + '</td>';
+        html += '<td class="money">' + fmtKRW(d.amt) + '</td></tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted);">데이터가 없습니다</td></tr>';
+}
+
+function toggleEl(id) {
+    var el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function downloadChart(canvasId, fileName) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) { alert('차트가 존재하지 않습니다.'); return; }
+    var w = canvas.width, h = canvas.height;
+    var tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width = w; tmpCanvas.height = h;
+    var ctx = tmpCanvas.getContext('2d');
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(canvas, 0, 0);
+    var link = document.createElement('a');
+    link.download = (fileName || 'chart') + '.png';
+    link.href = tmpCanvas.toDataURL('image/png', 1.0);
+    link.click();
+}
+
+updateItemCharts();
+</script>
+</body>
+</html>
