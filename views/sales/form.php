@@ -23,11 +23,16 @@
                         <input type="text" name="sale_date" id="sale_date" class="form-control datepicker" 
                                value="<?= e($sale['sale_date'] ?? date('Y-m-d')) ?>" required>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">출고일자</label>
+                        <input type="text" name="delivery_date" id="delivery_date" class="form-control datepicker" 
+                               value="<?= e($sale['delivery_date'] ?? '') ?>" placeholder="출고일자 선택">
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">업체명 <span class="text-danger">*</span></label>
-                        <select name="company_id" class="form-control" required>
+                        <label class="form-label">업체명</label>
+                        <select name="company_id" id="company_id" class="form-control">
                             <option value="">-- 업체 선택 --</option>
                             <?php foreach ($companies as $c): ?>
                             <option value="<?= $c['id'] ?>" <?= ($sale['company_id'] ?? '') == $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
@@ -45,7 +50,7 @@
                     <?php if (!empty($saleDetails)): ?>
                         <?php foreach ($saleDetails as $idx => $d): ?>
                         <div class="sale-line-item">
-                            <input type="text" name="product_name[]" class="form-control" placeholder="제품명" value="<?= e($d['product_name']) ?>" required>
+                            <input type="text" name="product_name[]" class="form-control" placeholder="제품명" value="<?= e($d['product_name']) ?>">
                             <select name="sale_item_id[]" class="form-control">
                                 <option value="">-- 선택 --</option>
                                 <?php foreach ($saleItems as $si): ?>
@@ -60,7 +65,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <div class="sale-line-item">
-                            <input type="text" name="product_name[]" class="form-control" placeholder="제품명" required>
+                            <input type="text" name="product_name[]" class="form-control" placeholder="제품명">
                             <select name="sale_item_id[]" class="form-control">
                                 <option value="">-- 선택 --</option>
                                 <?php foreach ($saleItems as $si): ?>
@@ -185,7 +190,7 @@
     <!-- Submit -->
     <div class="d-flex justify-between mt-3">
         <a href="?page=sales" class="btn btn-outline"><i class="fas fa-arrow-left"></i> 목록으로</a>
-        <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save"></i> <?= $isEdit ? '수정 저장' : '등록' ?></button>
+        <button type="button" class="btn btn-primary btn-lg" onclick="submitSaleForm()"><i class="fas fa-save"></i> <?= $isEdit ? '수정 저장' : '등록' ?></button>
     </div>
 </form>
 
@@ -211,6 +216,16 @@ flatpickr('#sale_date', {
             updateSaleNumber(dateStr);
         }
     }
+});
+
+// 출고일자 Flatpickr 초기화
+var deliveryDateInput = document.getElementById('delivery_date');
+var deliveryDateVal = deliveryDateInput ? deliveryDateInput.value : '';
+flatpickr('#delivery_date', {
+    locale: 'ko',
+    dateFormat: 'Y-m-d',
+    defaultDate: deliveryDateVal || null,
+    allowInput: true
 });
 
 document.querySelectorAll('.purchase-block .datepicker').forEach(function(el) {
@@ -259,7 +274,7 @@ function buildVendorOptions(selectedId) {
 // === 매출 라인 추가 ===
 function addSaleLine() {
     var html = '<div class="sale-line-item">' +
-        '<input type="text" name="product_name[]" class="form-control" placeholder="제품명" required>' +
+        '<input type="text" name="product_name[]" class="form-control" placeholder="제품명">' +
         '<select name="sale_item_id[]" class="form-control">' + buildSaleItemOptions() + '</select>' +
         '<input type="text" name="unit_price[]" class="form-control input-money" placeholder="단가" oninput="calcSaleLine(this)">' +
         '<input type="number" name="quantity[]" class="form-control" value="1" min="1" oninput="calcSaleLine(this)">' +
@@ -411,5 +426,32 @@ function calcProfit() {
 // Init calculations on load
 calcSaleTotal();
 calcPurchaseTotals();
+
+// === 업체명 미선택 확인 팝업 + 폼 제출 ===
+function submitSaleForm() {
+    var form = document.getElementById('saleForm');
+    var companySelect = document.getElementById('company_id');
+    var companyVal = companySelect ? companySelect.value : '';
+    
+    // 매출 제품명 필수 검증 (매출 정보가 있는 경우만)
+    var saleTotal = parseNumber(document.getElementById('sale-total-display').textContent);
+    if (saleTotal > 0) {
+        var productNames = document.querySelectorAll('#sale-lines input[name="product_name[]"]');
+        var hasProduct = false;
+        productNames.forEach(function(el) { if (el.value.trim()) hasProduct = true; });
+        if (!hasProduct) {
+            alert('매출 제품명을 입력해주세요.');
+            return;
+        }
+    }
+    
+    if (!companyVal) {
+        if (confirm('업체명이 선택되지 않았습니다.\n계속 진행하시겠습니까?')) {
+            form.submit();
+        }
+    } else {
+        form.submit();
+    }
+}
 JS;
 ?>

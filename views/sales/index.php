@@ -70,6 +70,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                     <tr>
                         <th>매출번호</th>
                         <th>매출일자</th>
+                        <th>출고일자</th>
                         <th>업체명</th>
                         <th>제품코드</th>
                         <th class="text-right">매출총액</th>
@@ -80,14 +81,15 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                 </thead>
                 <tbody>
                     <?php if (empty($sales)): ?>
-                    <tr><td colspan="8" class="text-center" style="padding:40px;color:var(--text-muted);">등록된 매출이 없습니다.</td></tr>
+                    <tr><td colspan="9" class="text-center" style="padding:40px;color:var(--text-muted);">등록된 매출이 없습니다.</td></tr>
                     <?php else: ?>
                     <?php foreach ($sales as $s): ?>
                     <?php $profit = $s['total_amount'] - $s['purchase_total']; ?>
                     <tr>
                         <td><strong><?= e($s['sale_number']) ?></strong></td>
                         <td><?= e($s['sale_date']) ?></td>
-                        <td><?= e($s['company_name']) ?></td>
+                        <td><?= !empty($s['delivery_date']) ? e($s['delivery_date']) : '<span style="color:var(--text-muted);">-</span>' ?></td>
+                        <td><?= !empty($s['company_name']) ? e($s['company_name']) : '<span style="color:var(--text-muted);">미지정</span>' ?></td>
                         <td><?php
                             if ($s['first_item_sort']) {
                                 $code = e($s['first_item_sort'] . '.' . $s['first_item_name']);

@@ -43,7 +43,7 @@ class SalesController {
         $pag = paginate($total, $perPage, $page);
         
         $sales = $db->fetchAll(
-            "SELECT s.*, c.name as company_name,
+            "SELECT s.*, s.delivery_date, c.name as company_name,
                     u.name as user_name,
                     COALESCE((SELECT SUM(p2.total_amount) FROM purchases p2 WHERE p2.sale_id=s.id AND p2.is_deleted=0),0) as purchase_total,
                     fi.name as first_item_name, fi.sort_order as first_item_sort,
@@ -208,13 +208,17 @@ class SalesController {
         try {
             $db->beginTransaction();
             
+            $companyId = postParam('company_id');
+            $deliveryDate = postParam('delivery_date', '');
+            
             $saleData = [
-                'sale_date'    => postParam('sale_date', date('Y-m-d')),
-                'company_id'   => (int)postParam('company_id'),
-                'sale_item_id' => null,  // 행별 sale_item_id로 이동됨 (호환성 유지)
-                'total_amount' => (int)str_replace(',', '', postParam('sale_total', '0')),
-                'vat_amount'   => (int)str_replace(',', '', postParam('sale_vat', '0')),
-                'user_id'      => Session::getUserId(),
+                'sale_date'     => postParam('sale_date', date('Y-m-d')),
+                'delivery_date' => !empty($deliveryDate) ? $deliveryDate : null,
+                'company_id'    => !empty($companyId) ? (int)$companyId : null,
+                'sale_item_id'  => null,  // 행별 sale_item_id로 이동됨 (호환성 유지)
+                'total_amount'  => (int)str_replace(',', '', postParam('sale_total', '0')),
+                'vat_amount'    => (int)str_replace(',', '', postParam('sale_vat', '0')),
+                'user_id'       => Session::getUserId(),
             ];
             
             if ($isEdit) {

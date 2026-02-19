@@ -82,6 +82,39 @@ class UserController {
         if ($old) {
             $db->update('users', ['is_active' => 0], 'id=?', [$id]);
             AuditLog::log('DELETE', 'users', $id, $old, null, '사용자 비활성화');
+            Session::set('flash_message', "사용자 '{$old['username']}'이(가) 비활성화되었습니다.");
+            Session::set('flash_type', 'success');
+        }
+        redirect('?page=users');
+    }
+    
+    /**
+     * 사용자 완전 삭제 (Admin 전용)
+     */
+    public function permanentDelete() {
+        Auth::requireRole(['admin']);
+        if (!CSRF::verify($_GET['token'] ?? '')) redirect('?page=users');
+        
+        $db = Database::getInstance();
+        $id = (int)getParam('id');
+        
+        if ($id == Session::getUserId()) {
+            Session::set('flash_message', '자기 자신은 삭제할 수 없습니다.');
+            Session::set('flash_type', 'danger');
+            redirect('?page=users');
+        }
+        
+        $old = $db->fetch("SELECT id, username, name, role FROM users WHERE id=?", [$id]);
+        if ($old) {
+            // 관련 매출/매입 데이터의 user_id를 현재 Admin으로 이관
+            $adminId = Session::getUserId();
+            $db->query("UPDATE sales SET user_id = ? WHERE user_id = ?", [$adminId, $id]);
+            $db->query("UPDATE purchases SET user_id = ? WHERE user_id = ?", [$adminId, $id]);
+            
+            $db->delete('users', 'id=?', [$id]);
+            AuditLog::log('DELETE', 'users', $id, $old, null, '사용자 영구 삭제');
+            Session::set('flash_message', "사용자 '{$old['username']}'이(가) 영구 삭제되었습니다.");
+            Session::set('flash_type', 'success');
         }
         redirect('?page=users');
     }

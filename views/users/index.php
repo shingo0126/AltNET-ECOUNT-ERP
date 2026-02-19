@@ -31,7 +31,8 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         <td class="text-center">
                             <button class="btn btn-outline btn-sm" onclick='editUser(<?= json_encode($u) ?>)'><i class="fas fa-edit"></i></button>
                             <?php if ($u['id'] != Session::getUserId()): ?>
-                            <a href="?page=users&action=delete&id=<?= $u['id'] ?>&token=<?= e(CSRF::generate()) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete('이 사용자를 비활성화 하시겠습니까?')"><i class="fas fa-user-slash"></i></a>
+                            <a href="?page=users&action=delete&id=<?= $u['id'] ?>&token=<?= e(CSRF::generate()) ?>" class="btn btn-warning btn-sm" onclick="return confirmDelete('이 사용자를 비활성화 하시겠습니까?')" title="비활성화"><i class="fas fa-user-slash"></i></a>
+                            <a href="?page=users&action=permanentDelete&id=<?= $u['id'] ?>&token=<?= e(CSRF::generate()) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete('이 사용자를 영구 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.\n해당 사용자의 매출/매입 데이터는 관리자에게 이관됩니다.')" title="영구삭제"><i class="fas fa-trash"></i></a>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -48,7 +49,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
         <table class="data-table">
             <thead><tr><th>역할</th><th>권한 범위</th></tr></thead>
             <tbody>
-                <tr><td><span class="badge badge-admin">ADMIN</span></td><td>전체 권한 (사용자 관리, 백업/복원, 모든 데이터 CRUD)</td></tr>
+                <tr><td><span class="badge badge-admin">ADMIN</span></td><td>전체 권한 (사용자 관리/삭제, 백업/복원, 모든 데이터 CRUD)</td></tr>
                 <tr><td><span class="badge badge-manager">MANAGER</span></td><td>매출/매입 CRUD + 업체/제품코드 관리</td></tr>
                 <tr><td><span class="badge badge-user">USER</span></td><td>매출/매입 조회 + 본인 등록건만 수정/삭제</td></tr>
             </tbody>
