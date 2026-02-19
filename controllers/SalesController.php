@@ -459,8 +459,6 @@ class SalesController {
             $purchaseDate = $s['first_purchase_date'] ?? '';
             $vendorName = $s['first_vendor_name'] ?? '';
             $vendorExtra = ((int)($s['purchase_count'] ?? 0) > 1) ? ' 외 ' . ((int)$s['purchase_count'] - 1) . '건' : '';
-            $purchProduct = $s['first_purchase_product'] ?? '';
-            $purchProdExtra = ((int)($s['purchase_detail_count'] ?? 0) > 1) ? ' 외 ' . ((int)$s['purchase_detail_count'] - 1) . '건' : '';
             
             // 해당 매출의 전체 sale_details 조회
             $details = $db->fetchAll(
@@ -473,17 +471,37 @@ class SalesController {
                 [$s['id']]
             );
             
+            // 해당 매출에 연결된 전체 매입제품 상세 조회
+            $purchDetails = $db->fetchAll(
+                "SELECT pd.product_name as p_product_name, pd.unit_price as p_unit_price,
+                        pd.quantity as p_quantity, pd.subtotal as p_subtotal,
+                        v.name as p_vendor_name, p.purchase_date as p_date
+                 FROM purchase_details pd
+                 JOIN purchases p ON pd.purchase_id = p.id
+                 LEFT JOIN vendors v ON COALESCE(pd.vendor_id, p.vendor_id) = v.id
+                 WHERE p.sale_id = ? AND p.is_deleted = 0
+                 ORDER BY p.id ASC, pd.sort_order ASC",
+                [$s['id']]
+            );
+            
             // 매입만 등록 (매출 제품 0건 + 매출총액 0) → 매출번호/매출일자 "-"
             $isPurchaseOnly = ((int)$s['total_amount'] === 0 && empty($details));
             $csvSaleNumber = $isPurchaseOnly ? '-' : $s['sale_number'];
             $csvSaleDate = $isPurchaseOnly ? '-' : $s['sale_date'];
             
+            // 첫 번째 매입제품 정보 (요약 표시용)
+            $firstPurchProd = !empty($purchDetails) ? $purchDetails[0]['p_product_name'] : '';
+            $purchProdSummary = $firstPurchProd;
+            if (count($purchDetails) > 1) {
+                $purchProdSummary .= ' 외 ' . (count($purchDetails) - 1) . '건';
+            }
+            
             if (empty($details)) {
-                // 제품 상세 없는 경우 기본 행 1개
+                // 매출 제품 상세 없는 경우 기본 행 1개
                 $rows[] = [
                     $csvSaleNumber, $csvSaleDate, $deliveryDate, $purchaseDate,
                     $s['company_name'] ?? '미지정',
-                    '-', '-', $vendorName . $vendorExtra, $purchProduct . $purchProdExtra,
+                    '-', '-', $vendorName . $vendorExtra, $purchProdSummary,
                     '', '', '',
                     number_format($s['total_amount']), number_format($s['vat_amount']),
                     number_format($s['purchase_total']), number_format($profit)
@@ -493,17 +511,15 @@ class SalesController {
                     $itemCode = $d['item_sort'] ? $d['item_sort'] . '.' . $d['item_name'] : '-';
                     
                     if ($idx === 0) {
-                        // 첫 번째 제품행: 매출 기본 정보 포함
                         $rows[] = [
                             $csvSaleNumber, $csvSaleDate, $deliveryDate, $purchaseDate,
                             $s['company_name'] ?? '미지정',
-                            $itemCode, $d['product_name'], $vendorName . $vendorExtra, $purchProduct . $purchProdExtra,
+                            $itemCode, $d['product_name'], $vendorName . $vendorExtra, $purchProdSummary,
                             number_format($d['unit_price']), $d['quantity'], number_format($d['subtotal']),
                             number_format($s['total_amount']), number_format($s['vat_amount']),
                             number_format($s['purchase_total']), number_format($profit)
                         ];
                     } else {
-                        // 2번째 이후 제품행: 매출번호~업체명은 빈칸, 제품 상세만 표시
                         $rows[] = [
                             '', '', '', '', '',
                             $itemCode, $d['product_name'], '', '',
@@ -511,6 +527,19 @@ class SalesController {
                             '', '', '', ''
                         ];
                     }
+                }
+            }
+            
+            // 매입제품 상세 행 확장 (2건 이상일 때 개별 행 출력)
+            if (count($purchDetails) > 1) {
+                foreach ($purchDetails as $pi => $pd) {
+                    $rows[] = [
+                        '', '', '', $pd['p_date'],
+                        '', '', '',
+                        $pd['p_vendor_name'] ?? '', $pd['p_product_name'],
+                        number_format($pd['p_unit_price']), $pd['p_quantity'], number_format($pd['p_subtotal']),
+                        '', '', '', ''
+                    ];
                 }
             }
         }
