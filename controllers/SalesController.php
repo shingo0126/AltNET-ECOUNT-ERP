@@ -429,11 +429,14 @@ class SalesController {
             $fileSuffix .= "_연간";
         }
         
-        // 매출 기본 정보 조회
+        // 매출 기본 정보 조회 (리스트 컬럼과 동일하게)
         $sales = $db->fetchAll(
-            "SELECT s.id, s.sale_number, s.sale_date, c.name as company_name, 
+            "SELECT s.id, s.sale_number, s.sale_date, s.delivery_date, c.name as company_name, 
                     s.total_amount, s.vat_amount, 
-                    COALESCE((SELECT SUM(p.total_amount) FROM purchases p WHERE p.sale_id=s.id AND p.is_deleted=0),0) as purchase_total
+                    COALESCE((SELECT SUM(p.total_amount) FROM purchases p WHERE p.sale_id=s.id AND p.is_deleted=0),0) as purchase_total,
+                    (SELECT MIN(p3.purchase_date) FROM purchases p3 WHERE p3.sale_id=s.id AND p3.is_deleted=0) as first_purchase_date,
+                    (SELECT v2.name FROM purchases p4 LEFT JOIN vendors v2 ON p4.vendor_id=v2.id WHERE p4.sale_id=s.id AND p4.is_deleted=0 ORDER BY p4.id ASC LIMIT 1) as first_vendor_name,
+                    (SELECT COUNT(DISTINCT p5.id) FROM purchases p5 WHERE p5.sale_id=s.id AND p5.is_deleted=0) as purchase_count
              FROM sales s 
              LEFT JOIN companies c ON s.company_id=c.id 
              WHERE $where
@@ -443,11 +446,15 @@ class SalesController {
         
         AuditLog::log('EXPORT', 'sales', null, null, null, "매출 CSV 다운로드 ({$fileSuffix})");
         
-        // 행 확장 방식: 제품코드별 별도 행 출력
-        $headers = ['매출번호', '매출일자', '업체명', '제품코드', '제품명', '단가', '수량', '소계', '매출총액', '부가세', '매입총액', '영업이익'];
+        // 행 확장 방식: 제품코드별 별도 행 출력 (리스트 컬럼과 동일)
+        $headers = ['매출번호', '매출일자', '출고일자', '매입일자', '업체명', '제품코드', '제품명', '매입업체', '단가', '수량', '소계', '매출총액', '부가세', '매입총액', '영업이익'];
         $rows = [];
         foreach ($sales as $s) {
             $profit = $s['total_amount'] - $s['purchase_total'];
+            $deliveryDate = $s['delivery_date'] ?? '';
+            $purchaseDate = $s['first_purchase_date'] ?? '';
+            $vendorName = $s['first_vendor_name'] ?? '';
+            $vendorExtra = ((int)($s['purchase_count'] ?? 0) > 1) ? ' 외 ' . ((int)$s['purchase_count'] - 1) . '건' : '';
             
             // 해당 매출의 전체 sale_details 조회
             $details = $db->fetchAll(
@@ -463,8 +470,10 @@ class SalesController {
             if (empty($details)) {
                 // 제품 상세 없는 경우 기본 행 1개
                 $rows[] = [
-                    $s['sale_number'], $s['sale_date'], $s['company_name'],
-                    '-', '-', '', '', '',
+                    $s['sale_number'], $s['sale_date'], $deliveryDate, $purchaseDate,
+                    $s['company_name'] ?? '미지정',
+                    '-', '-', $vendorName . $vendorExtra,
+                    '', '', '',
                     number_format($s['total_amount']), number_format($s['vat_amount']),
                     number_format($s['purchase_total']), number_format($profit)
                 ];
@@ -475,8 +484,9 @@ class SalesController {
                     if ($idx === 0) {
                         // 첫 번째 제품행: 매출 기본 정보 포함
                         $rows[] = [
-                            $s['sale_number'], $s['sale_date'], $s['company_name'],
-                            $itemCode, $d['product_name'],
+                            $s['sale_number'], $s['sale_date'], $deliveryDate, $purchaseDate,
+                            $s['company_name'] ?? '미지정',
+                            $itemCode, $d['product_name'], $vendorName . $vendorExtra,
                             number_format($d['unit_price']), $d['quantity'], number_format($d['subtotal']),
                             number_format($s['total_amount']), number_format($s['vat_amount']),
                             number_format($s['purchase_total']), number_format($profit)
@@ -484,8 +494,8 @@ class SalesController {
                     } else {
                         // 2번째 이후 제품행: 매출번호~업체명은 빈칸, 제품 상세만 표시
                         $rows[] = [
-                            '', '', '',
-                            $itemCode, $d['product_name'],
+                            '', '', '', '', '',
+                            $itemCode, $d['product_name'], '',
                             number_format($d['unit_price']), $d['quantity'], number_format($d['subtotal']),
                             '', '', '', ''
                         ];
