@@ -328,7 +328,7 @@ function addPurchaseBlock() {
     var html = '<div class="purchase-block" style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:12px;margin-bottom:12px;background:rgba(245,158,11,0.04);">' +
         '<div class="d-flex justify-between align-center mb-1">' +
         '<strong style="color:var(--amber-glow);font-size:13px;">매입 #' + (purchaseIdx+1) + '</strong>' +
-        '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\\'.purchase-block\\').remove();calcPurchaseTotals();">삭제</button></div>' +
+        '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(&quot;.purchase-block&quot;).remove();calcPurchaseTotals();">삭제</button></div>' +
         '<div class="form-row">' +
         '<div class="form-group"><label class="form-label">매입일자</label><input type="text" name="p_date[]" class="form-control datepicker" value="' + (document.getElementById('sale_date').value || new Date().toISOString().slice(0,10)) + '"></div>' +
         '</div>' +
@@ -446,7 +446,7 @@ function submitSaleForm() {
     }
     
     if (!companyVal) {
-        if (confirm('업체명이 선택되지 않았습니다.\n계속 진행하시겠습니까?')) {
+        if (confirm('업체명이 선택되지 않았습니다.\\n계속 진행하시겠습니까?')) {
             form.submit();
         }
     } else {
