@@ -47,7 +47,11 @@ class SalesController {
                     u.name as user_name,
                     COALESCE((SELECT SUM(p2.total_amount) FROM purchases p2 WHERE p2.sale_id=s.id AND p2.is_deleted=0),0) as purchase_total,
                     fi.name as first_item_name, fi.sort_order as first_item_sort,
-                    (SELECT COUNT(*) FROM sale_details sd2 WHERE sd2.sale_id=s.id) as detail_count
+                    (SELECT COUNT(*) FROM sale_details sd2 WHERE sd2.sale_id=s.id) as detail_count,
+                    (SELECT sd3.product_name FROM sale_details sd3 WHERE sd3.sale_id=s.id ORDER BY sd3.sort_order ASC LIMIT 1) as first_product_name,
+                    (SELECT MIN(p3.purchase_date) FROM purchases p3 WHERE p3.sale_id=s.id AND p3.is_deleted=0) as first_purchase_date,
+                    (SELECT v2.name FROM purchases p4 LEFT JOIN vendors v2 ON p4.vendor_id=v2.id WHERE p4.sale_id=s.id AND p4.is_deleted=0 ORDER BY p4.id ASC LIMIT 1) as first_vendor_name,
+                    (SELECT COUNT(DISTINCT p5.id) FROM purchases p5 WHERE p5.sale_id=s.id AND p5.is_deleted=0) as purchase_count
              FROM sales s 
              LEFT JOIN companies c ON s.company_id=c.id
              LEFT JOIN users u ON s.user_id=u.id
@@ -211,12 +215,29 @@ class SalesController {
             $companyId = postParam('company_id');
             $deliveryDate = postParam('delivery_date', '');
             
+            // 매출 제품이 0건인지 판별 (매입만 단독 등록 여부)
+            $productNames = $_POST['product_name'] ?? [];
+            $saleTotal = (int)str_replace(',', '', postParam('sale_total', '0'));
+            $hasSaleProducts = false;
+            foreach ($productNames as $pn) {
+                if (!empty(trim($pn))) { $hasSaleProducts = true; break; }
+            }
+            
+            // 매출 제품이 없으면 첫 번째 매입일자를 sale_date로 사용
+            $saleDateValue = postParam('sale_date', date('Y-m-d'));
+            if (!$hasSaleProducts || $saleTotal <= 0) {
+                $pDatesCheck = $_POST['p_date'] ?? [];
+                if (!empty($pDatesCheck) && !empty($pDatesCheck[0])) {
+                    $saleDateValue = $pDatesCheck[0];
+                }
+            }
+            
             $saleData = [
-                'sale_date'     => postParam('sale_date', date('Y-m-d')),
+                'sale_date'     => $saleDateValue,
                 'delivery_date' => !empty($deliveryDate) ? $deliveryDate : null,
                 'company_id'    => !empty($companyId) ? (int)$companyId : null,
                 'sale_item_id'  => null,  // 행별 sale_item_id로 이동됨 (호환성 유지)
-                'total_amount'  => (int)str_replace(',', '', postParam('sale_total', '0')),
+                'total_amount'  => $saleTotal,
                 'vat_amount'    => (int)str_replace(',', '', postParam('sale_vat', '0')),
                 'user_id'       => Session::getUserId(),
             ];

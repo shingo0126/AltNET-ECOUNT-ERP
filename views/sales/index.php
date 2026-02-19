@@ -71,8 +71,11 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         <th>매출번호</th>
                         <th>매출일자</th>
                         <th>출고일자</th>
+                        <th>매입일자</th>
                         <th>업체명</th>
                         <th>제품코드</th>
+                        <th>제품명</th>
+                        <th>매입업체</th>
                         <th class="text-right">매출총액</th>
                         <th class="text-right">매입총액</th>
                         <th class="text-right">영업이익</th>
@@ -81,7 +84,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                 </thead>
                 <tbody>
                     <?php if (empty($sales)): ?>
-                    <tr><td colspan="9" class="text-center" style="padding:40px;color:var(--text-muted);">등록된 매출이 없습니다.</td></tr>
+                    <tr><td colspan="12" class="text-center" style="padding:40px;color:var(--text-muted);">등록된 매출이 없습니다.</td></tr>
                     <?php else: ?>
                     <?php foreach ($sales as $s): ?>
                     <?php $profit = $s['total_amount'] - $s['purchase_total']; ?>
@@ -89,6 +92,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         <td><strong><?= e($s['sale_number']) ?></strong></td>
                         <td><?= e($s['sale_date']) ?></td>
                         <td><?= !empty($s['delivery_date']) ? e($s['delivery_date']) : '<span style="color:var(--text-muted);">-</span>' ?></td>
+                        <td><?= !empty($s['first_purchase_date']) ? e($s['first_purchase_date']) : '<span style="color:var(--text-muted);">-</span>' ?></td>
                         <td><?= !empty($s['company_name']) ? e($s['company_name']) : '<span style="color:var(--text-muted);">미지정</span>' ?></td>
                         <td><?php
                             if ($s['first_item_sort']) {
@@ -98,6 +102,24 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                                 if ($extra > 0) echo '<span style="color:var(--text-muted);font-size:12px;"> 외 ' . $extra . '건</span>';
                             } else {
                                 echo '-';
+                            }
+                        ?></td>
+                        <td><?php
+                            if (!empty($s['first_product_name'])) {
+                                echo e($s['first_product_name']);
+                                $extraProd = (int)$s['detail_count'] - 1;
+                                if ($extraProd > 0) echo '<span style="color:var(--text-muted);font-size:12px;"> 외 ' . $extraProd . '건</span>';
+                            } else {
+                                echo '<span style="color:var(--text-muted);">-</span>';
+                            }
+                        ?></td>
+                        <td><?php
+                            if (!empty($s['first_vendor_name'])) {
+                                echo e($s['first_vendor_name']);
+                                $extraVendor = (int)$s['purchase_count'] - 1;
+                                if ($extraVendor > 0) echo '<span style="color:var(--text-muted);font-size:12px;"> 외 ' . $extraVendor . '건</span>';
+                            } else {
+                                echo '<span style="color:var(--text-muted);">-</span>';
                             }
                         ?></td>
                         <td class="money"><?= formatMoney($s['total_amount']) ?></td>
