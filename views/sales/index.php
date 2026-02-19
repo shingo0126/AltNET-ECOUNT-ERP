@@ -76,6 +76,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         <th>제품코드</th>
                         <th>제품명</th>
                         <th>매입업체</th>
+                        <th>매입제품명</th>
                         <th class="text-right">매출총액</th>
                         <th class="text-right">매입총액</th>
                         <th class="text-right">영업이익</th>
@@ -84,7 +85,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                 </thead>
                 <tbody>
                     <?php if (empty($sales)): ?>
-                    <tr><td colspan="12" class="text-center" style="padding:40px;color:var(--text-muted);">등록된 매출이 없습니다.</td></tr>
+                    <tr><td colspan="13" class="text-center" style="padding:40px;color:var(--text-muted);">등록된 매출이 없습니다.</td></tr>
                     <?php else: ?>
                     <?php foreach ($sales as $s): ?>
                     <?php $profit = $s['total_amount'] - $s['purchase_total']; ?>
@@ -118,6 +119,15 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                                 echo e($s['first_vendor_name']);
                                 $extraVendor = (int)$s['purchase_count'] - 1;
                                 if ($extraVendor > 0) echo '<span style="color:var(--text-muted);font-size:12px;"> 외 ' . $extraVendor . '건</span>';
+                            } else {
+                                echo '<span style="color:var(--text-muted);">-</span>';
+                            }
+                        ?></td>
+                        <td><?php
+                            if (!empty($s['first_purchase_product'])) {
+                                echo e($s['first_purchase_product']);
+                                $extraPurchProd = (int)$s['purchase_detail_count'] - 1;
+                                if ($extraPurchProd > 0) echo '<span style="color:var(--text-muted);font-size:12px;"> 외 ' . $extraPurchProd . '건</span>';
                             } else {
                                 echo '<span style="color:var(--text-muted);">-</span>';
                             }
