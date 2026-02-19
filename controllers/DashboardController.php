@@ -27,7 +27,8 @@ class DashboardController {
         // Summary stats for period
         if ($viewType === 'yearly') {
             $monthlySales = $db->fetch(
-                "SELECT COALESCE(SUM(total_amount),0) as total, COUNT(*) as cnt 
+                "SELECT COALESCE(SUM(total_amount),0) as total, 
+                        SUM(CASE WHEN total_amount > 0 THEN 1 ELSE 0 END) as cnt 
                  FROM sales WHERE YEAR(sale_date)=? AND is_deleted=0",
                 [$year]
             );
@@ -38,7 +39,8 @@ class DashboardController {
             );
         } elseif ($viewType === 'quarterly' && $quarter) {
             $monthlySales = $db->fetch(
-                "SELECT COALESCE(SUM(total_amount),0) as total, COUNT(*) as cnt 
+                "SELECT COALESCE(SUM(total_amount),0) as total, 
+                        SUM(CASE WHEN total_amount > 0 THEN 1 ELSE 0 END) as cnt 
                  FROM sales WHERE YEAR(sale_date)=? AND QUARTER(sale_date)=? AND is_deleted=0",
                 [$year, $quarter]
             );
@@ -49,7 +51,8 @@ class DashboardController {
             );
         } else {
             $monthlySales = $db->fetch(
-                "SELECT COALESCE(SUM(total_amount),0) as total, COUNT(*) as cnt 
+                "SELECT COALESCE(SUM(total_amount),0) as total, 
+                        SUM(CASE WHEN total_amount > 0 THEN 1 ELSE 0 END) as cnt 
                  FROM sales WHERE YEAR(sale_date)=? AND MONTH(sale_date)=? AND is_deleted=0",
                 [$year, $month]
             );
@@ -62,7 +65,8 @@ class DashboardController {
         
         // ===== 월별 매출 데이터 (12개월) =====
         $monthlyData = $db->fetchAll(
-            "SELECT MONTH(sale_date) as m, COALESCE(SUM(total_amount),0) as total, COUNT(*) as cnt
+            "SELECT MONTH(sale_date) as m, COALESCE(SUM(total_amount),0) as total, 
+                    SUM(CASE WHEN total_amount > 0 THEN 1 ELSE 0 END) as cnt
              FROM sales WHERE YEAR(sale_date)=? AND is_deleted=0 GROUP BY MONTH(sale_date) ORDER BY m",
             [$year]
         );
@@ -88,9 +92,10 @@ class DashboardController {
             [$year]
         );
         
-        // ===== 월별 등록 건수 =====
+        // ===== 월별 등록 건수 (매입전용 건 제외: total_amount > 0인 건만 카운트) =====
         $monthlyCountData = $db->fetchAll(
-            "SELECT MONTH(sale_date) as m, COUNT(*) as cnt
+            "SELECT MONTH(sale_date) as m, 
+                    SUM(CASE WHEN total_amount > 0 THEN 1 ELSE 0 END) as cnt
              FROM sales WHERE YEAR(sale_date)=? AND is_deleted=0 GROUP BY MONTH(sale_date) ORDER BY m",
             [$year]
         );
