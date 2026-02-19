@@ -28,6 +28,21 @@ require_once __DIR__ . '/core/CSRF.php';
 require_once __DIR__ . '/core/Auth.php';
 require_once __DIR__ . '/core/AuditLog.php';
 require_once __DIR__ . '/core/Helper.php';
+require_once __DIR__ . '/core/Migration.php';
+
+// ★ DB 마이그레이션 자동 실행 (미적용 마이그레이션이 있을 때만)
+try {
+    $migration = new Migration();
+    if ($migration->hasPending()) {
+        $migrationResult = $migration->run();
+        // 에러가 있으면 로그에만 기록 (사용자에게는 노출하지 않음)
+        if (!empty($migrationResult['errors'])) {
+            error_log('Migration errors: ' . implode(', ', $migrationResult['errors']));
+        }
+    }
+} catch (Exception $e) {
+    error_log('Migration system error: ' . $e->getMessage());
+}
 
 // Start session
 Session::start();
