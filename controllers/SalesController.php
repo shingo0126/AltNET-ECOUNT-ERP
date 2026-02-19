@@ -473,10 +473,15 @@ class SalesController {
                 [$s['id']]
             );
             
+            // 매입만 등록 (매출 제품 0건 + 매출총액 0) → 매출번호/매출일자 "-"
+            $isPurchaseOnly = ((int)$s['total_amount'] === 0 && empty($details));
+            $csvSaleNumber = $isPurchaseOnly ? '-' : $s['sale_number'];
+            $csvSaleDate = $isPurchaseOnly ? '-' : $s['sale_date'];
+            
             if (empty($details)) {
                 // 제품 상세 없는 경우 기본 행 1개
                 $rows[] = [
-                    $s['sale_number'], $s['sale_date'], $deliveryDate, $purchaseDate,
+                    $csvSaleNumber, $csvSaleDate, $deliveryDate, $purchaseDate,
                     $s['company_name'] ?? '미지정',
                     '-', '-', $vendorName . $vendorExtra, $purchProduct . $purchProdExtra,
                     '', '', '',
@@ -490,7 +495,7 @@ class SalesController {
                     if ($idx === 0) {
                         // 첫 번째 제품행: 매출 기본 정보 포함
                         $rows[] = [
-                            $s['sale_number'], $s['sale_date'], $deliveryDate, $purchaseDate,
+                            $csvSaleNumber, $csvSaleDate, $deliveryDate, $purchaseDate,
                             $s['company_name'] ?? '미지정',
                             $itemCode, $d['product_name'], $vendorName . $vendorExtra, $purchProduct . $purchProdExtra,
                             number_format($d['unit_price']), $d['quantity'], number_format($d['subtotal']),

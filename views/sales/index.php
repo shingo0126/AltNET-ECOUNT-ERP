@@ -89,9 +89,10 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                     <?php else: ?>
                     <?php foreach ($sales as $s): ?>
                     <?php $profit = $s['total_amount'] - $s['purchase_total']; ?>
+                    <?php $isPurchaseOnly = ((int)$s['total_amount'] === 0 && (int)$s['detail_count'] === 0); ?>
                     <tr>
-                        <td><strong><?= e($s['sale_number']) ?></strong></td>
-                        <td><?= e($s['sale_date']) ?></td>
+                        <td><?php if ($isPurchaseOnly): ?><span style="color:var(--text-muted);">-</span><?php else: ?><strong><?= e($s['sale_number']) ?></strong><?php endif; ?></td>
+                        <td><?php if ($isPurchaseOnly): ?><span style="color:var(--text-muted);">-</span><?php else: ?><?= e($s['sale_date']) ?><?php endif; ?></td>
                         <td><?= !empty($s['delivery_date']) ? e($s['delivery_date']) : '<span style="color:var(--text-muted);">-</span>' ?></td>
                         <td><?= !empty($s['first_purchase_date']) ? e($s['first_purchase_date']) : '<span style="color:var(--text-muted);">-</span>' ?></td>
                         <td><?= !empty($s['company_name']) ? e($s['company_name']) : '<span style="color:var(--text-muted);">미지정</span>' ?></td>
