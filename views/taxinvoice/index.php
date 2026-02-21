@@ -195,23 +195,30 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
 </div>
 
 <!-- ===== 보기 전용 팝업 ===== -->
+<style>
+#tiPopupContent::-webkit-scrollbar { width: 4px; }
+#tiPopupContent::-webkit-scrollbar-track { background: transparent; }
+#tiPopupContent::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+#tiPopupContent::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+#tiPopupContent { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
+</style>
 <div id="tiPopupOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;background:rgba(0,0,0,0.5);"></div>
 <div id="tiPopup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:900px;max-width:95vw;max-height:90vh;overflow:auto;z-index:9999;background:var(--card-bg);border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
+    width:auto;min-width:600px;max-width:95vw;z-index:9999;background:var(--card-bg);border-radius:16px;border:1px solid rgba(255,255,255,0.08);box-shadow:0 20px 60px rgba(0,0,0,0.4);">
     
-    <div style="padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">
-        <h3 id="tiPopupTitle" style="margin:0;font-size:16px;font-weight:700;color:var(--text-primary);">
+    <div style="padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">
+        <h3 id="tiPopupTitle" style="margin:0;font-size:15px;font-weight:700;color:var(--text-primary);">
             <i class="fas fa-eye" style="color:var(--cyan-accent);"></i> 세금계산서 상세보기
         </h3>
         <button type="button" onclick="closeViewPopup()" class="modal-close"><i class="fas fa-times"></i></button>
     </div>
     
-    <div id="tiPopupContent" style="padding:20px 24px;">
+    <div id="tiPopupContent" style="padding:14px 20px;max-height:calc(90vh - 100px);overflow-y:auto;">
         <div style="text-align:center;padding:40px;color:var(--text-muted);">로딩 중...</div>
     </div>
     
-    <div style="padding:12px 24px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:flex-end;gap:8px;">
-        <button type="button" class="btn btn-outline" onclick="closeViewPopup()"><i class="fas fa-times"></i> 닫기</button>
+    <div style="padding:10px 20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeViewPopup()"><i class="fas fa-times"></i> 닫기</button>
     </div>
 </div>
 
@@ -245,20 +252,20 @@ function renderViewContent(data) {
     
     var fmtM = function(v) { return new Intl.NumberFormat('ko-KR').format(parseInt(v) || 0); };
     
-    var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">';
-    html += '<div><span style="color:var(--text-muted);font-size:12px;">매출번호</span><div style="font-weight:600;color:var(--cyan-accent);">' + (inv.sale_number || '-') + '</div></div>';
-    html += '<div><span style="color:var(--text-muted);font-size:12px;">처리상태</span><div><span style="padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;color:' + (statusColors[inv.status]||'#fff') + ';background:' + (statusBg[inv.status]||'transparent') + ';">' + (statusLabels[inv.status]||inv.status) + '</span></div></div>';
-    html += '<div><span style="color:var(--text-muted);font-size:12px;">매출일자</span><div>' + (inv.request_date || '-') + '</div></div>';
-    html += '<div><span style="color:var(--text-muted);font-size:12px;">출고일자</span><div>' + (inv.delivery_date || '-') + '</div></div>';
-    html += '<div><span style="color:var(--text-muted);font-size:12px;">업체명</span><div><strong>' + (inv.company_name || '미지정') + '</strong></div></div>';
+    var html = '<div style="display:flex;flex-wrap:wrap;gap:10px 24px;margin-bottom:14px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.02);">';
+    html += '<div><span style="color:var(--text-muted);font-size:11px;">매출번호</span><div style="font-weight:600;color:var(--cyan-accent);font-size:13px;">' + (inv.sale_number || '-') + '</div></div>';
+    html += '<div><span style="color:var(--text-muted);font-size:11px;">매출일자</span><div style="font-size:13px;">' + (inv.request_date || '-') + '</div></div>';
+    html += '<div><span style="color:var(--text-muted);font-size:11px;">출고일자</span><div style="font-size:13px;">' + (inv.delivery_date || '-') + '</div></div>';
+    html += '<div><span style="color:var(--text-muted);font-size:11px;">업체명</span><div style="font-size:13px;"><strong>' + (inv.company_name || '미지정') + '</strong></div></div>';
+    html += '<div><span style="color:var(--text-muted);font-size:11px;">상태</span><div><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;color:' + (statusColors[inv.status]||'#fff') + ';background:' + (statusBg[inv.status]||'transparent') + ';">' + (statusLabels[inv.status]||inv.status) + '</span></div></div>';
     if (inv.status === 'pending' && inv.pending_reason) {
-        html += '<div><span style="color:var(--amber-glow);font-size:12px;">보류 사유</span><div style="color:var(--amber-glow);">' + inv.pending_reason + '</div></div>';
+        html += '<div><span style="color:var(--amber-glow);font-size:11px;">보류 사유</span><div style="color:var(--amber-glow);font-size:13px;">' + inv.pending_reason + '</div></div>';
     }
     html += '</div>';
     
     // 판매 제품
-    html += '<div style="margin-bottom:16px;"><div style="font-weight:700;margin-bottom:8px;color:var(--text-primary);"><i class="fas fa-chart-line" style="color:var(--cyan-accent);"></i> 판매 제품</div>';
-    html += '<table class="data-table"><thead><tr><th>제품명</th><th>제품코드</th><th class="text-right">단가</th><th class="text-right">수량</th><th class="text-right">소계</th></tr></thead><tbody>';
+    html += '<div style="margin-bottom:12px;"><div style="font-weight:700;margin-bottom:6px;font-size:13px;color:var(--text-primary);"><i class="fas fa-chart-line" style="color:var(--cyan-accent);"></i> 판매 제품</div>';
+    html += '<table class="data-table" style="font-size:12px;"><thead><tr><th>제품명</th><th>제품코드</th><th class="text-right">단가</th><th class="text-right" style="width:40px;">수량</th><th class="text-right">소계</th></tr></thead><tbody>';
     if (det.length === 0) {
         html += '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">제품 없음</td></tr>';
     } else {
@@ -268,29 +275,29 @@ function renderViewContent(data) {
         });
     }
     html += '</tbody></table>';
-    html += '<div style="text-align:right;margin-top:8px;font-weight:700;">매출 총액: <span style="color:var(--cyan-accent);">' + fmtM(inv.total_amount) + '원</span> / 부가세: ' + fmtM(inv.vat_amount) + '원</div></div>';
+    html += '<div style="text-align:right;margin-top:6px;font-weight:700;font-size:13px;">매출 총액: <span style="color:var(--cyan-accent);">' + fmtM(inv.total_amount) + '원</span> / 부가세: ' + fmtM(inv.vat_amount) + '원</div></div>';
     
     // 매입 정보
     if (purch.length > 0) {
-        html += '<div><div style="font-weight:700;margin-bottom:8px;color:var(--text-primary);"><i class="fas fa-shopping-cart" style="color:var(--amber-glow);"></i> 매입 정보</div>';
+        html += '<div><div style="font-weight:700;margin-bottom:6px;font-size:13px;color:var(--text-primary);"><i class="fas fa-shopping-cart" style="color:var(--amber-glow);"></i> 매입 정보</div>';
         purch.forEach(function(p, pi) {
-            html += '<div style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;margin-bottom:8px;background:rgba(245,158,11,0.04);">';
-            html += '<div style="font-weight:600;color:var(--amber-glow);font-size:13px;margin-bottom:6px;">매입 #' + (pi+1) + ' (매입일자: ' + p.purchase_date + ')</div>';
-            html += '<table class="data-table"><thead><tr><th>제품명</th><th>매입업체</th><th class="text-right">단가</th><th class="text-right">수량</th><th class="text-right">소계</th></tr></thead><tbody>';
+            html += '<div style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:8px;margin-bottom:6px;background:rgba(245,158,11,0.04);">';
+            html += '<div style="font-weight:600;color:var(--amber-glow);font-size:12px;margin-bottom:4px;">매입 #' + (pi+1) + ' (매입일자: ' + p.purchase_date + ')</div>';
+            html += '<table class="data-table" style="font-size:12px;"><thead><tr><th>제품명</th><th>매입업체</th><th class="text-right">단가</th><th class="text-right" style="width:40px;">수량</th><th class="text-right">소계</th></tr></thead><tbody>';
             (p.details || []).forEach(function(pd) {
                 html += '<tr><td>' + pd.product_name + '</td><td>' + (pd.vendor_name || '-') + '</td><td class="money">' + fmtM(pd.unit_price) + '</td><td class="text-right">' + pd.quantity + '</td><td class="money">' + fmtM(pd.subtotal) + '</td></tr>';
             });
             html += '</tbody></table>';
-            html += '<div style="text-align:right;margin-top:4px;font-size:13px;color:var(--amber-glow);">소계: ' + fmtM(p.total_amount) + '원</div></div>';
+            html += '<div style="text-align:right;margin-top:3px;font-size:12px;color:var(--amber-glow);">소계: ' + fmtM(p.total_amount) + '원</div></div>';
         });
-        html += '<div style="text-align:right;margin-top:8px;font-weight:700;">매입 총액: <span style="color:var(--amber-glow);">' + fmtM(inv.purchase_total_amount) + '원</span> / 부가세: ' + fmtM(inv.purchase_vat_amount) + '원</div></div>';
+        html += '<div style="text-align:right;margin-top:6px;font-weight:700;font-size:13px;">매입 총액: <span style="color:var(--amber-glow);">' + fmtM(inv.purchase_total_amount) + '원</span> / 부가세: ' + fmtM(inv.purchase_vat_amount) + '원</div></div>';
     }
     
     // 영업이익
     var profit = (parseInt(inv.total_amount) || 0) - (parseInt(inv.purchase_total_amount) || 0);
-    html += '<div style="margin-top:16px;padding:12px;border-radius:8px;background:rgba(255,255,255,0.03);text-align:center;">';
-    html += '<span style="margin-right:24px;">매출: <strong>' + fmtM(inv.total_amount) + '원</strong></span>';
-    html += '<span style="margin-right:24px;color:var(--amber-glow);">매입: <strong>' + fmtM(inv.purchase_total_amount) + '원</strong></span>';
+    html += '<div style="margin-top:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.03);text-align:center;font-size:13px;">';
+    html += '<span style="margin-right:20px;">매출: <strong>' + fmtM(inv.total_amount) + '원</strong></span>';
+    html += '<span style="margin-right:20px;color:var(--amber-glow);">매입: <strong>' + fmtM(inv.purchase_total_amount) + '원</strong></span>';
     html += '<span>영업이익: <strong style="color:' + (profit >= 0 ? 'var(--success)' : 'var(--danger)') + ';">' + fmtM(profit) + '원</strong></span></div>';
     
     document.getElementById('tiPopupContent').innerHTML = html;
