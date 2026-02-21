@@ -20,9 +20,9 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
     <h2 style="font-size:20px;font-weight:700;color:var(--text-primary);margin:0;">
         <i class="fas fa-file-invoice" style="color:var(--cyan-accent);"></i> 세금계산서 발행 요청 관리
     </h2>
-    <button class="btn btn-primary" onclick="openCreatePopup()">
+    <a href="?page=taxinvoice&action=create" class="btn btn-primary">
         <i class="fas fa-plus"></i> 발행 요청 등록
-    </button>
+    </a>
 </div>
 
 <!-- 집계 카드 -->
@@ -56,26 +56,30 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                 <thead>
                     <tr>
                         <th style="width:40px;">No</th>
-                        <th>요청일자</th>
-                        <th>매출업체</th>
-                        <th>프로젝트</th>
-                        <th class="text-right">총액</th>
+                        <th>매출번호</th>
+                        <th>매출일자</th>
+                        <th>출고일자</th>
+                        <th>업체명</th>
+                        <th class="text-right">매출총액</th>
+                        <th class="text-right">매입총액</th>
                         <th style="width:80px;text-align:center;">처리상태</th>
                         <th style="width:160px;">보류 사유</th>
-                        <th style="width:80px;text-align:center;">관리</th>
+                        <th style="width:120px;text-align:center;">관리</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($requestList)): ?>
-                    <tr><td colspan="8" class="text-center" style="padding:30px;color:var(--text-muted);">발행 요청 건이 없습니다.</td></tr>
+                    <tr><td colspan="10" class="text-center" style="padding:30px;color:var(--text-muted);">발행 요청 건이 없습니다.</td></tr>
                     <?php else: ?>
                     <?php foreach ($requestList as $idx => $r): ?>
                     <tr>
                         <td><?= $reqPag['offset'] + $idx + 1 ?></td>
+                        <td style="white-space:nowrap;font-weight:600;color:var(--cyan-accent);"><?= e($r['sale_number'] ?: '-') ?></td>
                         <td style="white-space:nowrap;"><?= e($r['request_date']) ?></td>
+                        <td style="white-space:nowrap;"><?= e($r['delivery_date'] ?: '-') ?></td>
                         <td><strong><?= e($r['company_name']) ?></strong></td>
-                        <td><?= e($r['project_name']) ?></td>
                         <td class="money"><?= formatMoney($r['total_amount']) ?>원</td>
+                        <td class="money" style="color:var(--amber-glow);"><?= formatMoney($r['purchase_total_amount']) ?>원</td>
                         <td style="text-align:center;">
                             <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;
                                 color:<?= $statusColors[$r['status']] ?>;background:<?= $statusBg[$r['status']] ?>;">
@@ -95,7 +99,7 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                         <td style="text-align:center;white-space:nowrap;">
                             <button class="btn btn-outline btn-sm" onclick="openViewPopup(<?= $r['id'] ?>)" title="보기"><i class="fas fa-eye"></i></button>
                             <?php if ($isAdmin): ?>
-                            <button class="btn btn-outline btn-sm" onclick="openEditPopup(<?= $r['id'] ?>)" title="편집"><i class="fas fa-edit"></i></button>
+                            <a href="?page=taxinvoice&action=edit&id=<?= $r['id'] ?>" class="btn btn-outline btn-sm" title="편집"><i class="fas fa-edit"></i></a>
                             <a href="?page=taxinvoice&action=delete&id=<?= $r['id'] ?>&token=<?= e($csrfToken) ?>" 
                                class="btn btn-danger btn-sm" onclick="return confirm('삭제하시겠습니까?')" title="삭제"><i class="fas fa-trash"></i></a>
                             <?php endif; ?>
@@ -134,35 +138,40 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
                 <thead>
                     <tr>
                         <th style="width:40px;">No</th>
-                        <th>요청일자</th>
-                        <th>매출업체</th>
-                        <th>프로젝트</th>
-                        <th class="text-right">총액</th>
+                        <th>매출번호</th>
+                        <th>매출일자</th>
+                        <th>출고일자</th>
+                        <th>업체명</th>
+                        <th class="text-right">매출총액</th>
+                        <th class="text-right">매입총액</th>
                         <th style="width:80px;text-align:center;">처리상태</th>
-                        <?php if ($isAdmin): ?><th style="width:60px;text-align:center;">관리</th><?php endif; ?>
+                        <th style="width:120px;text-align:center;">관리</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($completedList)): ?>
-                    <tr><td colspan="<?= $isAdmin ? 7 : 6 ?>" class="text-center" style="padding:30px;color:var(--text-muted);">발행 완료 건이 없습니다.</td></tr>
+                    <tr><td colspan="9" class="text-center" style="padding:30px;color:var(--text-muted);">발행 완료 건이 없습니다.</td></tr>
                     <?php else: ?>
                     <?php foreach ($completedList as $idx => $r): ?>
                     <tr>
                         <td><?= $compPag['offset'] + $idx + 1 ?></td>
+                        <td style="white-space:nowrap;font-weight:600;color:var(--cyan-accent);"><?= e($r['sale_number'] ?: '-') ?></td>
                         <td style="white-space:nowrap;"><?= e($r['request_date']) ?></td>
+                        <td style="white-space:nowrap;"><?= e($r['delivery_date'] ?: '-') ?></td>
                         <td><strong><?= e($r['company_name']) ?></strong></td>
-                        <td><?= e($r['project_name']) ?></td>
                         <td class="money"><?= formatMoney($r['total_amount']) ?>원</td>
+                        <td class="money" style="color:var(--amber-glow);"><?= formatMoney($r['purchase_total_amount']) ?>원</td>
                         <td style="text-align:center;">
                             <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;
                                 color:#3b82f6;background:rgba(59,130,246,0.12);">완료</span>
                         </td>
-                        <?php if ($isAdmin): ?>
                         <td style="text-align:center;white-space:nowrap;">
+                            <button class="btn btn-outline btn-sm" onclick="openViewPopup(<?= $r['id'] ?>)" title="보기"><i class="fas fa-eye"></i></button>
+                            <?php if ($isAdmin): ?>
                             <a href="?page=taxinvoice&action=delete&id=<?= $r['id'] ?>&token=<?= e($csrfToken) ?>" 
                                class="btn btn-danger btn-sm" onclick="return confirm('삭제하시겠습니까?')" title="삭제"><i class="fas fa-trash"></i></a>
+                            <?php endif; ?>
                         </td>
-                        <?php endif; ?>
                     </tr>
                     <?php endforeach; ?>
                     <?php endif; ?>
@@ -185,329 +194,116 @@ if ($flashMsg) { Session::remove('flash_message'); Session::remove('flash_type')
     </div>
 </div>
 
-<!-- ===== 팝업 오버레이 ===== -->
-<div id="tiPopupOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;"></div>
-
-<!-- ===== 발행 요청 등록/수정/보기 팝업 (No Scrollbar: compact layout) ===== -->
+<!-- ===== 보기 전용 팝업 ===== -->
+<div id="tiPopupOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;background:rgba(0,0,0,0.5);"></div>
 <div id="tiPopup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:780px;max-width:95vw;overflow:visible;z-index:9999;">
-    <form method="POST" action="?page=taxinvoice&action=save" id="tiForm">
-        <?= CSRF::field() ?>
-        <input type="hidden" name="invoice_id" id="ti_invoice_id" value="">
-        
-        <!-- 팝업 헤더 -->
-        <div style="padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">
-            <h3 id="tiPopupTitle" style="margin:0;font-size:16px;font-weight:700;color:var(--text-primary);">
-                <i class="fas fa-file-invoice" style="color:var(--cyan-accent);"></i> 세금계산서 발행 요청 등록
-            </h3>
-            <button type="button" onclick="closePopup()" class="modal-close">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <!-- 팝업 본문 (compact padding to avoid scrollbar) -->
-        <div style="padding:14px 24px 10px;">
-            <!-- 요청일자 / 업체명 / 프로젝트 — 3열 그리드로 압축 -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-                <div class="form-group mb-0">
-                    <label class="form-label">요청일자 <span class="text-danger">*</span></label>
-                    <input type="text" name="request_date" id="ti_request_date" class="form-control ti-datepicker" required>
-                </div>
-                <div class="form-group mb-0">
-                    <label class="form-label">업체명 <span class="text-danger">*</span></label>
-                    <select name="company_id" id="ti_company_id" class="form-control" required>
-                        <option value="">-- 매출업체 선택 --</option>
-                        <?php foreach ($companies as $c): ?>
-                        <option value="<?= $c['id'] ?>"><?= e($c['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="form-group mb-0">
-                    <label class="form-label">프로젝트</label>
-                    <input type="text" name="project_name" id="ti_project_name" class="form-control" placeholder="프로젝트명 직접 입력">
-                </div>
-            </div>
-            
-            <!-- 제품 라인 아이템 (다중) -->
-            <div class="form-label" style="margin-bottom:4px;">
-                <i class="fas fa-box" style="color:var(--cyan-accent);"></i> 제품 내역
-            </div>
-            <div class="ti-line-item-header">
-                <span>제품명</span><span>수량</span><span>단가</span><span>소계</span><span></span>
-            </div>
-            <div id="ti-lines" class="line-items">
-                <div class="ti-line-item">
-                    <input type="text" name="ti_product_name[]" class="form-control" placeholder="제품명 입력" required>
-                    <input type="number" name="ti_quantity[]" class="form-control" value="1" min="1" oninput="calcTiLine(this)">
-                    <input type="text" name="ti_unit_price[]" class="form-control input-money" placeholder="단가" oninput="calcTiLine(this)">
-                    <input type="text" class="form-control input-money ti-subtotal" readonly value="0">
-                    <button type="button" class="btn-remove" onclick="removeTiLine(this)"><i class="fas fa-times"></i></button>
-                </div>
-            </div>
-            <button type="button" class="btn btn-outline btn-sm" id="tiAddLineBtn" onclick="addTiLine()" style="margin-top:4px;">
-                <i class="fas fa-plus"></i> 제품 추가
-            </button>
-            
-            <!-- 총액 / 부가세 — 인라인으로 압축 -->
-            <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;display:flex;align-items:center;justify-content:flex-end;gap:20px;">
-                <span style="font-size:12px;color:var(--text-muted);">총액</span>
-                <span class="total-value" id="ti-total-display" style="font-size:18px;">0</span>
-                <input type="hidden" name="total_amount" id="ti_total_amount" value="0">
-                <span style="font-size:12px;color:var(--text-muted);">VAT (10%)</span>
-                <span class="total-value" id="ti-vat-display" style="font-size:14px;">0</span>
-                <input type="hidden" name="vat_amount" id="ti_vat_amount" value="0">
-            </div>
-            
-            <!-- 처리 상태 + 보류 사유 — 한 줄로 압축 -->
-            <div style="margin-top:10px;display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">
-                <div>
-                    <label class="form-label" style="margin-bottom:4px;">처리 상태</label>
-                    <div class="d-flex gap-2">
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-weight:600;font-size:12px;color:var(--emerald);background:rgba(16,185,129,0.1);">
-                            <input type="radio" name="status" value="requested" checked onchange="togglePendingReason()"> 요청
-                        </label>
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-weight:600;font-size:12px;color:var(--amber-glow);background:rgba(245,158,11,0.1);">
-                            <input type="radio" name="status" value="pending" onchange="togglePendingReason()"> 보류
-                        </label>
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;border:1px solid rgba(34,211,238,0.3);border-radius:8px;font-weight:600;font-size:12px;color:var(--cyan-accent);background:rgba(34,211,238,0.1);">
-                            <input type="radio" name="status" value="completed" onchange="togglePendingReason()"> 완료
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group mb-0" id="pendingReasonWrap" style="display:none;flex:1;min-width:200px;">
-                    <label class="form-label" style="color:var(--amber-glow);margin-bottom:4px;"><i class="fas fa-exclamation-triangle" style="color:var(--amber-glow);"></i> 보류 사유 <span class="text-danger">*</span></label>
-                    <textarea name="pending_reason" id="ti_pending_reason" class="form-control" rows="2" 
-                        placeholder="보류 사유를 입력하세요..." style="border-color:rgba(245,158,11,0.3);resize:vertical;"></textarea>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 팝업 하단 버튼 -->
-        <div id="tiPopupFooter" style="padding:12px 24px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:flex-end;gap:8px;background:rgba(255,255,255,0.02);border-radius:0 0 16px 16px;">
-            <button type="button" class="btn btn-outline" id="tiCancelBtn" onclick="closePopup()"><i class="fas fa-times"></i> 취소</button>
-            <button type="submit" class="btn btn-primary" id="tiSubmitBtn"><i class="fas fa-save"></i> 등록</button>
-            <button type="button" class="btn btn-outline" id="tiCloseBtn" onclick="closePopup()" style="display:none;"><i class="fas fa-times"></i> 닫기</button>
-        </div>
-    </form>
+    width:900px;max-width:95vw;max-height:90vh;overflow:auto;z-index:9999;background:var(--card-bg);border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
+    
+    <div style="padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">
+        <h3 id="tiPopupTitle" style="margin:0;font-size:16px;font-weight:700;color:var(--text-primary);">
+            <i class="fas fa-eye" style="color:var(--cyan-accent);"></i> 세금계산서 상세보기
+        </h3>
+        <button type="button" onclick="closeViewPopup()" class="modal-close"><i class="fas fa-times"></i></button>
+    </div>
+    
+    <div id="tiPopupContent" style="padding:20px 24px;">
+        <div style="text-align:center;padding:40px;color:var(--text-muted);">로딩 중...</div>
+    </div>
+    
+    <div style="padding:12px 24px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-outline" onclick="closeViewPopup()"><i class="fas fa-times"></i> 닫기</button>
+    </div>
 </div>
 
 <?php
-$companiesJson = json_encode($companies, JSON_UNESCAPED_UNICODE);
 $pageScript = <<<JS
 
-var isViewMode = false; // 보기 전용 모드 플래그
-
-// ===== 보류 사유 토글 =====
-function togglePendingReason() {
-    var status = document.querySelector('input[name="status"]:checked');
-    var wrap = document.getElementById('pendingReasonWrap');
-    var textarea = document.getElementById('ti_pending_reason');
-    if (status && status.value === 'pending') {
-        wrap.style.display = 'block';
-        textarea.required = true;
-    } else {
-        wrap.style.display = 'none';
-        textarea.required = false;
-    }
-}
-
-// ===== 팝업 열기/닫기 =====
-function openCreatePopup() {
-    isViewMode = false;
-    document.getElementById('ti_invoice_id').value = '';
-    document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-file-invoice" style="color:var(--cyan-accent);"></i> 세금계산서 발행 요청 등록';
-    document.getElementById('tiSubmitBtn').innerHTML = '<i class="fas fa-save"></i> 등록';
-    document.getElementById('tiForm').reset();
-    
-    // 제품 라인 초기화 (1줄만)
-    var lines = document.getElementById('ti-lines');
-    lines.innerHTML = '<div class="ti-line-item">' +
-        '<input type="text" name="ti_product_name[]" class="form-control" placeholder="제품명 입력" required>' +
-        '<input type="number" name="ti_quantity[]" class="form-control" value="1" min="1" oninput="calcTiLine(this)">' +
-        '<input type="text" name="ti_unit_price[]" class="form-control input-money" placeholder="단가" oninput="calcTiLine(this)">' +
-        '<input type="text" class="form-control input-money ti-subtotal" readonly value="0">' +
-        '<button type="button" class="btn-remove" onclick="removeTiLine(this)"><i class="fas fa-times"></i></button></div>';
-    
-    document.getElementById('ti-total-display').textContent = '0';
-    document.getElementById('ti-vat-display').textContent = '0';
-    document.getElementById('ti_pending_reason').value = '';
-    
-    setFormEditable(true);
-    togglePendingReason();
-    showPopup();
-    initTiDatepicker();
-    initMoneyInputs();
-}
-
-function openEditPopup(id) {
-    isViewMode = false;
-    loadInvoiceData(id, false);
-}
-
+// ===== 보기 팝업 =====
 function openViewPopup(id) {
-    isViewMode = true;
-    loadInvoiceData(id, true);
-}
-
-function loadInvoiceData(id, readOnly) {
-    fetch('?page=taxinvoice&action=getDetail&id=' + id)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.error) { alert(data.error); return; }
-            var inv = data.invoice;
-            var det = data.details;
-            
-            document.getElementById('ti_invoice_id').value = inv.id;
-            
-            if (readOnly) {
-                document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-eye" style="color:var(--cyan-accent);"></i> 세금계산서 요청 상세보기 (#' + inv.id + ')';
-            } else {
-                document.getElementById('tiPopupTitle').innerHTML = '<i class="fas fa-edit" style="color:var(--cyan-accent);"></i> 세금계산서 요청 수정 (#' + inv.id + ')';
-                document.getElementById('tiSubmitBtn').innerHTML = '<i class="fas fa-save"></i> 수정 저장';
-            }
-            
-            document.getElementById('ti_company_id').value = inv.company_id;
-            document.getElementById('ti_project_name').value = inv.project_name;
-            
-            // 상태 라디오 설정
-            var radios = document.querySelectorAll('input[name="status"]');
-            radios.forEach(function(r) { r.checked = (r.value === inv.status); });
-            
-            // 보류 사유 복원
-            document.getElementById('ti_pending_reason').value = inv.pending_reason || '';
-            togglePendingReason();
-            
-            // 제품 라인 복원
-            var lines = document.getElementById('ti-lines');
-            lines.innerHTML = '';
-            if (det.length === 0) det = [{ product_name: '', quantity: 1, unit_price: 0, subtotal: 0 }];
-            det.forEach(function(d) {
-                lines.innerHTML += '<div class="ti-line-item">' +
-                    '<input type="text" name="ti_product_name[]" class="form-control" placeholder="제품명 입력" required value="' + escHtml(d.product_name) + '">' +
-                    '<input type="number" name="ti_quantity[]" class="form-control" value="' + d.quantity + '" min="1" oninput="calcTiLine(this)">' +
-                    '<input type="text" name="ti_unit_price[]" class="form-control input-money" value="' + fmtNum(d.unit_price) + '" oninput="calcTiLine(this)">' +
-                    '<input type="text" class="form-control input-money ti-subtotal" readonly value="' + fmtNum(d.subtotal) + '">' +
-                    '<button type="button" class="btn-remove" onclick="removeTiLine(this)"><i class="fas fa-times"></i></button></div>';
-            });
-            
-            setFormEditable(!readOnly);
-            showPopup();
-            initTiDatepicker(inv.request_date);
-            initMoneyInputs();
-            calcTiTotal();
-        })
-        .catch(function(err) { alert('데이터 로드 실패: ' + err); });
-}
-
-// ===== 읽기 전용 모드 전환 =====
-function setFormEditable(editable) {
-    var form = document.getElementById('tiForm');
-    var fields = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
-    var addLineBtn = document.getElementById('tiAddLineBtn');
-    var removeBtns = form.querySelectorAll('.btn-remove');
-    var cancelBtn = document.getElementById('tiCancelBtn');
-    var submitBtn = document.getElementById('tiSubmitBtn');
-    var closeBtn = document.getElementById('tiCloseBtn');
-    
-    fields.forEach(function(f) {
-        if (editable) {
-            f.removeAttribute('disabled');
-        } else {
-            f.setAttribute('disabled', 'disabled');
-        }
-    });
-    
-    // 제품 추가/삭제 버튼
-    if (addLineBtn) addLineBtn.style.display = editable ? '' : 'none';
-    removeBtns.forEach(function(b) { b.style.display = editable ? '' : 'none'; });
-    
-    // 하단 버튼: show/hide 방식 (★ innerHTML 교체하지 않음 → tiSubmitBtn 보존)
-    if (editable) {
-        if (cancelBtn) cancelBtn.style.display = '';
-        if (submitBtn) submitBtn.style.display = '';
-        if (closeBtn) closeBtn.style.display = 'none';
-    } else {
-        if (cancelBtn) cancelBtn.style.display = 'none';
-        if (submitBtn) submitBtn.style.display = 'none';
-        if (closeBtn) closeBtn.style.display = '';
-    }
-}
-
-function showPopup() {
     document.getElementById('tiPopupOverlay').style.display = 'block';
     document.getElementById('tiPopup').style.display = 'block';
     document.body.style.overflow = 'hidden';
+    document.getElementById('tiPopupContent').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> 로딩 중...</div>';
+    
+    fetch('?page=taxinvoice&action=getDetail&id=' + id)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) { document.getElementById('tiPopupContent').innerHTML = '<div class="alert alert-danger">' + data.error + '</div>'; return; }
+            renderViewContent(data);
+        })
+        .catch(function(err) { document.getElementById('tiPopupContent').innerHTML = '<div class="alert alert-danger">로드 실패: ' + err + '</div>'; });
 }
 
-function closePopup() {
+function renderViewContent(data) {
+    var inv = data.invoice;
+    var det = data.details;
+    var purch = data.purchases || [];
+    
+    var statusLabels = {requested:'요청', pending:'보류', completed:'완료'};
+    var statusColors = {requested:'#22d3ee', pending:'#f59e0b', completed:'#3b82f6'};
+    var statusBg = {requested:'rgba(34,211,238,0.12)', pending:'rgba(245,158,11,0.12)', completed:'rgba(59,130,246,0.12)'};
+    
+    var fmtM = function(v) { return new Intl.NumberFormat('ko-KR').format(parseInt(v) || 0); };
+    
+    var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">';
+    html += '<div><span style="color:var(--text-muted);font-size:12px;">매출번호</span><div style="font-weight:600;color:var(--cyan-accent);">' + (inv.sale_number || '-') + '</div></div>';
+    html += '<div><span style="color:var(--text-muted);font-size:12px;">처리상태</span><div><span style="padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;color:' + (statusColors[inv.status]||'#fff') + ';background:' + (statusBg[inv.status]||'transparent') + ';">' + (statusLabels[inv.status]||inv.status) + '</span></div></div>';
+    html += '<div><span style="color:var(--text-muted);font-size:12px;">매출일자</span><div>' + (inv.request_date || '-') + '</div></div>';
+    html += '<div><span style="color:var(--text-muted);font-size:12px;">출고일자</span><div>' + (inv.delivery_date || '-') + '</div></div>';
+    html += '<div><span style="color:var(--text-muted);font-size:12px;">업체명</span><div><strong>' + (inv.company_name || '미지정') + '</strong></div></div>';
+    if (inv.status === 'pending' && inv.pending_reason) {
+        html += '<div><span style="color:var(--amber-glow);font-size:12px;">보류 사유</span><div style="color:var(--amber-glow);">' + inv.pending_reason + '</div></div>';
+    }
+    html += '</div>';
+    
+    // 판매 제품
+    html += '<div style="margin-bottom:16px;"><div style="font-weight:700;margin-bottom:8px;color:var(--text-primary);"><i class="fas fa-chart-line" style="color:var(--cyan-accent);"></i> 판매 제품</div>';
+    html += '<table class="data-table"><thead><tr><th>제품명</th><th>제품코드</th><th class="text-right">단가</th><th class="text-right">수량</th><th class="text-right">소계</th></tr></thead><tbody>';
+    if (det.length === 0) {
+        html += '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">제품 없음</td></tr>';
+    } else {
+        det.forEach(function(d) {
+            var itemCode = d.item_sort ? d.item_sort + '.' + d.item_name : '-';
+            html += '<tr><td>' + d.product_name + '</td><td>' + itemCode + '</td><td class="money">' + fmtM(d.unit_price) + '</td><td class="text-right">' + d.quantity + '</td><td class="money">' + fmtM(d.subtotal) + '</td></tr>';
+        });
+    }
+    html += '</tbody></table>';
+    html += '<div style="text-align:right;margin-top:8px;font-weight:700;">매출 총액: <span style="color:var(--cyan-accent);">' + fmtM(inv.total_amount) + '원</span> / 부가세: ' + fmtM(inv.vat_amount) + '원</div></div>';
+    
+    // 매입 정보
+    if (purch.length > 0) {
+        html += '<div><div style="font-weight:700;margin-bottom:8px;color:var(--text-primary);"><i class="fas fa-shopping-cart" style="color:var(--amber-glow);"></i> 매입 정보</div>';
+        purch.forEach(function(p, pi) {
+            html += '<div style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;margin-bottom:8px;background:rgba(245,158,11,0.04);">';
+            html += '<div style="font-weight:600;color:var(--amber-glow);font-size:13px;margin-bottom:6px;">매입 #' + (pi+1) + ' (매입일자: ' + p.purchase_date + ')</div>';
+            html += '<table class="data-table"><thead><tr><th>제품명</th><th>매입업체</th><th class="text-right">단가</th><th class="text-right">수량</th><th class="text-right">소계</th></tr></thead><tbody>';
+            (p.details || []).forEach(function(pd) {
+                html += '<tr><td>' + pd.product_name + '</td><td>' + (pd.vendor_name || '-') + '</td><td class="money">' + fmtM(pd.unit_price) + '</td><td class="text-right">' + pd.quantity + '</td><td class="money">' + fmtM(pd.subtotal) + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            html += '<div style="text-align:right;margin-top:4px;font-size:13px;color:var(--amber-glow);">소계: ' + fmtM(p.total_amount) + '원</div></div>';
+        });
+        html += '<div style="text-align:right;margin-top:8px;font-weight:700;">매입 총액: <span style="color:var(--amber-glow);">' + fmtM(inv.purchase_total_amount) + '원</span> / 부가세: ' + fmtM(inv.purchase_vat_amount) + '원</div></div>';
+    }
+    
+    // 영업이익
+    var profit = (parseInt(inv.total_amount) || 0) - (parseInt(inv.purchase_total_amount) || 0);
+    html += '<div style="margin-top:16px;padding:12px;border-radius:8px;background:rgba(255,255,255,0.03);text-align:center;">';
+    html += '<span style="margin-right:24px;">매출: <strong>' + fmtM(inv.total_amount) + '원</strong></span>';
+    html += '<span style="margin-right:24px;color:var(--amber-glow);">매입: <strong>' + fmtM(inv.purchase_total_amount) + '원</strong></span>';
+    html += '<span>영업이익: <strong style="color:' + (profit >= 0 ? 'var(--success)' : 'var(--danger)') + ';">' + fmtM(profit) + '원</strong></span></div>';
+    
+    document.getElementById('tiPopupContent').innerHTML = html;
+}
+
+function closeViewPopup() {
     document.getElementById('tiPopupOverlay').style.display = 'none';
     document.getElementById('tiPopup').style.display = 'none';
     document.body.style.overflow = '';
-    isViewMode = false;
 }
 
-// 오버레이 클릭 시 닫기
-document.getElementById('tiPopupOverlay').addEventListener('click', closePopup);
+document.getElementById('tiPopupOverlay').addEventListener('click', closeViewPopup);
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeViewPopup(); });
 
-// ESC 키로 닫기
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closePopup(); });
-
-// ===== 날짜 picker =====
-var tiDatepickerInst = null;
-function initTiDatepicker(defaultVal) {
-    if (tiDatepickerInst) tiDatepickerInst.destroy();
-    tiDatepickerInst = flatpickr('#ti_request_date', {
-        locale: 'ko',
-        dateFormat: 'Y-m-d',
-        defaultDate: defaultVal || 'today',
-        allowInput: true
-    });
-}
-
-// ===== 제품 라인 추가/삭제/계산 =====
-function addTiLine() {
-    if (isViewMode) return;
-    var html = '<div class="ti-line-item">' +
-        '<input type="text" name="ti_product_name[]" class="form-control" placeholder="제품명 입력" required>' +
-        '<input type="number" name="ti_quantity[]" class="form-control" value="1" min="1" oninput="calcTiLine(this)">' +
-        '<input type="text" name="ti_unit_price[]" class="form-control input-money" placeholder="단가" oninput="calcTiLine(this)">' +
-        '<input type="text" class="form-control input-money ti-subtotal" readonly value="0">' +
-        '<button type="button" class="btn-remove" onclick="removeTiLine(this)"><i class="fas fa-times"></i></button></div>';
-    document.getElementById('ti-lines').insertAdjacentHTML('beforeend', html);
-    initMoneyInputs();
-}
-
-function removeTiLine(btn) {
-    if (isViewMode) return;
-    var container = btn.closest('.line-items');
-    if (container.querySelectorAll('.ti-line-item').length > 1) {
-        btn.closest('.ti-line-item').remove();
-        calcTiTotal();
-    }
-}
-
-function calcTiLine(el) {
-    var row = el.closest('.ti-line-item');
-    var price = parseNumber(row.querySelector('[name="ti_unit_price[]"]').value);
-    var qty = parseInt(row.querySelector('[name="ti_quantity[]"]').value) || 1;
-    row.querySelector('.ti-subtotal').value = formatNumber(price * qty);
-    calcTiTotal();
-}
-
-function calcTiTotal() {
-    var total = 0;
-    document.querySelectorAll('.ti-subtotal').forEach(function(el) {
-        total += parseNumber(el.value);
-    });
-    document.getElementById('ti-total-display').textContent = formatNumber(total);
-    document.getElementById('ti_total_amount').value = total;
-    var vat = Math.floor(total * 0.1);
-    document.getElementById('ti-vat-display').textContent = formatNumber(vat);
-    document.getElementById('ti_vat_amount').value = vat;
-}
-
-// 유틸리티
-function fmtNum(v) { return new Intl.NumberFormat('ko-KR').format(parseInt(v) || 0); }
-function escHtml(s) { var d = document.createElement('div'); d.appendChild(document.createTextNode(s || '')); return d.innerHTML; }
 JS;
 ?>
